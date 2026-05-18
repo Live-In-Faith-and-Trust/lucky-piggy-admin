@@ -20,7 +20,7 @@ export default function CurrentRoundCard({ roundNumber, drawDate }: Props) {
       <p className="text-xs font-medium text-muted-foreground">이번 주 추첨</p>
       <div>
         <p className="text-2xl font-bold text-foreground">제{roundNumber}회</p>
-        <p className="text-sm text-primary mt-1">{formatKSTDate(drawDate)} 추첨 예정</p>
+        <p className="text-sm text-muted-foreground mt-1">{formatKSTDate(drawDate)} 추첨 예정</p>
       </div>
       <div>
         <p className="text-xs text-muted-foreground mb-2">남은 시간</p>

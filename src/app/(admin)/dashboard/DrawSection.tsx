@@ -12,19 +12,20 @@ type DrawRow = {
 async function getDrawData(): Promise<{ current: DrawRow | null; previous: DrawRow | null }> {
   try {
     const supabase = await getSupabaseClient()
+    const now = new Date().toISOString()
     const [currentResult, previousResult] = await Promise.all([
       supabase
         .from('draws')
         .select('round_number, draw_date, winning_numbers, bonus_number')
-        .in('status', ['upcoming', 'active'])
-        .order('round_number', { ascending: false })
+        .gte('draw_date', now)
+        .order('draw_date', { ascending: true })
         .limit(1)
         .maybeSingle(),
       supabase
         .from('draws')
         .select('round_number, draw_date, winning_numbers, bonus_number')
-        .in('status', ['drawn', 'completed'])
-        .order('round_number', { ascending: false })
+        .lt('draw_date', now)
+        .order('draw_date', { ascending: false })
         .limit(1)
         .maybeSingle(),
     ])
