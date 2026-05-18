@@ -9,6 +9,14 @@ type DrawRow = {
   bonus_number: number | null
 }
 
+// DB의 draw_date는 실제 추첨 처리 시각이 다를 수 있으므로
+// 날짜만 유지하고 시간을 매주 토요일 20:30 KST(11:30 UTC)로 정규화
+function normalizeToDrawTime(drawDate: string): string {
+  const d = new Date(drawDate)
+  d.setUTCHours(11, 30, 0, 0)
+  return d.toISOString()
+}
+
 async function getDrawData(): Promise<{ current: DrawRow | null; previous: DrawRow | null }> {
   try {
     const supabase = await getSupabaseClient()
@@ -48,7 +56,7 @@ export default async function DrawSection() {
       {current ? (
         <CurrentRoundCard
           roundNumber={current.round_number}
-          drawDate={current.draw_date}
+          drawDate={normalizeToDrawTime(current.draw_date)}
         />
       ) : (
         <div className="rounded-xl border border-border bg-card p-5">
