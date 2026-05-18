@@ -50,7 +50,12 @@ export default function AddWinnerDialog({ drawId }: Props) {
       if (result.error) {
         setError(result.error)
       } else {
-        handleClose()
+        setOpen(false)
+        setError(null)
+        setUserId('')
+        setPrizeRank('1')
+        setRealName('')
+        setAdminMemo('')
         router.refresh()
       }
     })
