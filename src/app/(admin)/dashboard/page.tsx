@@ -77,7 +77,7 @@ export default async function DashboardPage() {
             alt=""
             width={160}
             height={160}
-            className="absolute bottom-0 -right-6 w-40 h-40 object-contain pointer-events-none select-none"
+            className="absolute -bottom-5 -right-6 w-40 h-40 object-contain pointer-events-none select-none"
             aria-hidden
           />
           <p className="text-xs font-medium text-muted-foreground mb-2">전체 회원수</p>
