@@ -13,7 +13,7 @@ type DrawRow = {
 // 날짜만 유지하고 시간을 매주 토요일 20:30 KST(11:30 UTC)로 정규화
 function normalizeToDrawTime(drawDate: string): string {
   const d = new Date(drawDate)
-  d.setUTCHours(11, 30, 0, 0)
+  d.setUTCHours(11, 0, 0, 0)
   return d.toISOString()
 }
 
