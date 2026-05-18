@@ -71,7 +71,15 @@ export default async function DashboardPage() {
       <h1 className="text-lg font-semibold text-foreground">대시보드</h1>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="relative overflow-visible rounded-xl border border-border bg-card p-5">
+          <Image
+            src="/character/pig-notice.png"
+            alt=""
+            width={160}
+            height={160}
+            className="absolute -top-16 -right-6 w-40 h-40 object-contain pointer-events-none select-none"
+            aria-hidden
+          />
           <p className="text-xs font-medium text-muted-foreground mb-2">전체 회원수</p>
           <p className="text-3xl font-bold text-foreground tabular-nums">
             {totalUsers === null ? '—' : totalUsers.toLocaleString('ko-KR')}
@@ -90,17 +98,7 @@ export default async function DashboardPage() {
 
       <SignupChart weeklyData={weeklyData} monthlyData={monthlyData} />
 
-      <div className="relative pt-2">
-        <Image
-          src="/character/pig-notice.png"
-          alt=""
-          width={96}
-          height={96}
-          className="absolute -top-10 right-4 w-20 h-20 object-contain pointer-events-none select-none"
-          aria-hidden
-        />
-        <DrawSection />
-      </div>
+      <DrawSection />
     </div>
   )
 }
