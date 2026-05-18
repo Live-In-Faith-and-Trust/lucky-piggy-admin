@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { getSupabaseClient } from '@/lib/supabase/server'
 import SignupChart, { type DayData } from './SignupChart'
 import DrawSection from './DrawSection'
@@ -89,7 +90,17 @@ export default async function DashboardPage() {
 
       <SignupChart weeklyData={weeklyData} monthlyData={monthlyData} />
 
-      <DrawSection />
+      <div className="relative pt-2">
+        <Image
+          src="/character/pig-notice.png"
+          alt=""
+          width={96}
+          height={96}
+          className="absolute -top-10 right-4 w-20 h-20 object-contain pointer-events-none select-none"
+          aria-hidden
+        />
+        <DrawSection />
+      </div>
     </div>
   )
 }
