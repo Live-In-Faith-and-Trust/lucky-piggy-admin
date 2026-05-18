@@ -100,7 +100,7 @@ export default function SignupChart({ weeklyData, monthlyData }: Props) {
               boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
             }}
             labelStyle={{ color: 'var(--muted-foreground)', marginBottom: 2 }}
-            formatter={(value: number) => [`${value.toLocaleString('ko-KR')}명`, '신규 가입']}
+            formatter={(value) => [`${Number(value).toLocaleString('ko-KR')}명`, '신규 가입']}
             cursor={{ stroke: 'var(--border)', strokeWidth: 1 }}
           />
           <Area
