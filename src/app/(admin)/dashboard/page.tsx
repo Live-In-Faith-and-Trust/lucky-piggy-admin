@@ -77,6 +77,7 @@ export default async function DashboardPage() {
             alt=""
             width={160}
             height={160}
+            loading="eager"
             className="absolute -bottom-5 -right-6 w-40 h-40 object-contain pointer-events-none select-none"
             aria-hidden
           />

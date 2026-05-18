@@ -25,22 +25,24 @@ export default function PreviousRoundCard({ roundNumber, drawDate, winningNumber
         <p className="text-sm text-muted-foreground mt-1">{formatKSTDate(drawDate)} 추첨</p>
       </div>
       {winningNumbers && winningNumbers.length > 0 ? (
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            {winningNumbers.map((n) => (
-              <LottoBall key={n} number={n} />
-            ))}
-            {bonusNumber != null && (
-              <>
-                <span className="text-muted-foreground font-bold text-lg">+</span>
+        <div className="flex items-end gap-3">
+          <div className="flex flex-col gap-1.5">
+            <div className="flex flex-wrap gap-2">
+              {winningNumbers.map((n) => (
+                <LottoBall key={n} number={n} />
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground text-center">당첨번호</p>
+          </div>
+          {bonusNumber != null && (
+            <>
+              <span className="text-muted-foreground font-bold text-lg mb-5">+</span>
+              <div className="flex flex-col gap-1.5 items-center">
                 <LottoBall number={bonusNumber} />
-              </>
-            )}
-          </div>
-          <div className="flex mt-2 text-xs text-muted-foreground">
-            <span>당첨번호</span>
-            {bonusNumber != null && <span className="ml-auto">보너스번호</span>}
-          </div>
+                <p className="text-xs text-muted-foreground">보너스번호</p>
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">결과 대기중</p>

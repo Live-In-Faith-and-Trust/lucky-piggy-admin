@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-pretendard), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -26,6 +26,10 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -49,72 +53,81 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* ── Brand colors from Lucky Piggy ui_kit/src/tokens/colors.dart ── */
+  --background: #F2F5F5;          /* AppColors.background */
+  --foreground: #1A1A1A;          /* AppColors.textPrimary */
+  --card: #FFFFFF;                /* AppColors.card */
+  --card-foreground: #1A1A1A;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1A1A;
+  --primary: #FFDD13;             /* AppColors.primary — Bright Gold */
+  --primary-foreground: #1A1A1A; /* AppColors.onPrimary */
+  --secondary: #FE6A86;           /* AppColors.secondary — Brand Pink */
+  --secondary-foreground: #FFFFFF;
+  --success: #22C55E;             /* AppColors.success */
+  --success-foreground: #FFFFFF;
+  --warning: #F59E0B;             /* AppColors.warning */
+  --warning-foreground: #1A1A1A;
+  --muted: #F5F5F5;               /* AppColors.neutral100 */
+  --muted-foreground: #5C5C5C;   /* AppColors.textSecondary */
+  --accent: #FFF176;              /* AppColors.primaryLight — soft gold tint */
+  --accent-foreground: #1A1A1A;
+  --destructive: #EF4444;         /* AppColors.error */
+  --border: #E0E0E0;              /* AppColors.outline */
+  --input: #E0E0E0;
+  --ring: #FFDD13;                /* AppColors.primary — focus ring */
+  --chart-1: #FFDD13;             /* AppColors.primary */
+  --chart-2: #FE6A86;             /* AppColors.secondary */
+  --chart-3: #1A4FD8;             /* AppColors.accentBlue */
+  --chart-4: #22C55E;             /* AppColors.success */
+  --chart-5: #F59E0B;             /* AppColors.warning */
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1A1A1A;
+  --sidebar-primary: #FFDD13;    /* AppColors.primary */
+  --sidebar-primary-foreground: #1A1A1A;
+  --sidebar-accent: #FFF176;     /* AppColors.primaryLight */
+  --sidebar-accent-foreground: #1A1A1A;
+  --sidebar-border: #E0E0E0;     /* AppColors.outline */
+  --sidebar-ring: #FFDD13;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #1A1A1A;          /* AppColors.neutral900 */
+  --foreground: #FFFFFF;          /* AppColors.textInverse */
+  --card: #2E2E2E;                /* AppColors.neutral800 */
+  --card-foreground: #FFFFFF;
+  --popover: #2E2E2E;
+  --popover-foreground: #FFFFFF;
+  --primary: #FFDD13;             /* AppColors.primary — 다크에서도 브랜드 골드 유지 */
+  --primary-foreground: #1A1A1A;
+  --secondary: #444444;           /* AppColors.neutral700 */
+  --secondary-foreground: #FFFFFF;
+  --muted: #444444;
+  --muted-foreground: #9E9E9E;   /* AppColors.neutral400 */
+  --accent: #D4B800;              /* AppColors.primaryDark — 어두운 배경에 어울리는 골드 */
+  --accent-foreground: #1A1A1A;
+  --success: #22C55E;
+  --success-foreground: #FFFFFF;
+  --warning: #F59E0B;
+  --warning-foreground: #1A1A1A;
+  --destructive: #EF4444;         /* AppColors.error */
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 15%);
+  --ring: #FFDD13;
+  --chart-1: #FFDD13;
+  --chart-2: #FE6A86;
+  --chart-3: #1A4FD8;
+  --chart-4: #22C55E;
+  --chart-5: #F59E0B;
+  --sidebar: #2E2E2E;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #FFDD13;
+  --sidebar-primary-foreground: #1A1A1A;
+  --sidebar-accent: #444444;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: rgb(255 255 255 / 10%);
+  --sidebar-ring: #FFDD13;
 }
 
 @layer base {
