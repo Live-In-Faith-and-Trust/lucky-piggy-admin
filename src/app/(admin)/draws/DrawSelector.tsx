@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
-import { RotateCw } from 'lucide-react'
+import { ChevronDown, RotateCw } from 'lucide-react'
 import { type Draw } from '@/lib/supabase/draws'
 import { refreshWinners } from '@/app/(admin)/draws/actions'
 
@@ -25,18 +25,21 @@ export default function DrawSelector({ draws, currentDrawId }: Props) {
 
   return (
     <div className="flex items-center gap-2">
-      <select
-        value={currentDrawId}
-        onChange={(e) => router.push(`/draws?drawId=${e.target.value}`)}
-        aria-label="회차 선택"
-        className="border border-border rounded-md px-3 py-1.5 text-sm bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-      >
-        {draws.map((draw) => (
-          <option key={draw.id} value={draw.id}>
-            {draw.round_number}회차 ({STATUS_LABELS[draw.status] ?? draw.status})
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          value={currentDrawId}
+          onChange={(e) => router.push(`/draws?drawId=${e.target.value}`)}
+          aria-label="회차 선택"
+          className="appearance-none border border-border rounded-md pl-3 pr-8 py-1.5 text-sm bg-card text-foreground tracking-tight focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
+        >
+          {draws.map((draw) => (
+            <option key={draw.id} value={draw.id}>
+              {draw.round_number}회차 ({STATUS_LABELS[draw.status] ?? draw.status})
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      </div>
       <button
         onClick={() =>
           startTransition(async () => {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Download } from 'lucide-react'
+import { Download, Target, CheckCircle2 } from 'lucide-react'
 import { type DrawWinner } from '@/lib/supabase/draws'
 import { formatKRW } from '@/lib/format'
 import AccountVerifyToggle from './_components/AccountVerifyToggle'
@@ -54,10 +54,10 @@ function maskName(winner: DrawWinner): string {
   return name[0] + '*'.repeat(Math.min(name.length - 1, 2))
 }
 
-const RANK_STYLES: Record<number, string> = {
-  1: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
-  2: 'bg-slate-50 text-slate-600 border border-slate-200',
-  3: 'bg-orange-50 text-orange-700 border border-orange-200',
+const RANK_BADGE: Record<number, string> = {
+  1: 'bg-[#FFDD13] text-[#7A5C00]',
+  2: 'bg-slate-100 text-slate-600 border border-slate-200',
+  3: 'bg-orange-100 text-orange-700 border border-orange-200',
 }
 
 const TABS = [
@@ -91,108 +91,122 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
     activeTab === 0 ? '이 회차의 1~3등 당첨자가 없습니다' : `이 회차의 ${activeTab}등 당첨자가 없습니다`
 
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      {/* Toolbar */}
+      <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-3 flex-wrap">
         <AddWinnerDialog drawId={drawId} />
         <button
           onClick={() => downloadWinnersCSV(winners, rankAmounts, roundNumber)}
           disabled={winners.length === 0}
-          className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-md bg-muted text-muted-foreground hover:bg-accent hover:text-foreground border border-border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Download className="w-3.5 h-3.5" />
-          엑셀 다운로드
+          CSV 내보내기
         </button>
       </div>
 
-      <div role="tablist" className="flex gap-1 border-b border-border px-4 pt-1">
-        {TABS.map(({ key, label }) => (
-          <button
-            key={key}
-            role="tab"
-            aria-selected={activeTab === key}
-            onClick={() => setActiveTab(key)}
-            className={`px-3 py-2 text-sm font-medium rounded-t-md transition-colors flex items-center gap-1.5 ${
-              activeTab === key
-                ? 'text-foreground border-b-2 border-primary -mb-px'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {label}
-            <span className="text-xs bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 tabular-nums">
-              {key === 0 ? winners.length : (countByRank[key] ?? 0)}
-            </span>
-          </button>
-        ))}
+      {/* Segment Control Tabs */}
+      <div className="px-4 py-2.5 border-b border-border">
+        <div role="tablist" className="inline-flex items-center gap-0.5 p-1 bg-muted rounded-lg">
+          {TABS.map(({ key, label }) => {
+            const count = key === 0 ? winners.length : (countByRank[key] ?? 0)
+            const isActive = activeTab === key
+            return (
+              <button
+                key={key}
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(key)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-all tracking-tight ${
+                  isActive
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {label}
+                <span
+                  className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-full leading-none font-semibold ${
+                    isActive ? 'bg-primary text-primary-foreground' : 'bg-border text-muted-foreground'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
+      {/* Table */}
       <div className="overflow-x-auto">
         {filtered.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground text-sm">
-            {emptyMessage}
+          <div className="flex flex-col items-center justify-center py-16 gap-2 text-muted-foreground text-sm tracking-tight">
+            <Target className="w-8 h-8 opacity-40" />
+            <span>{emptyMessage}</span>
           </div>
         ) : (
           <table className="w-full text-sm">
             <caption className="sr-only">당첨자 목록</caption>
             <thead>
-              <tr className="text-xs text-muted-foreground border-b border-border">
-                <th className="text-left px-4 py-3 font-medium">등수</th>
-                <th className="text-left px-4 py-3 font-medium">이름</th>
-                <th className="text-left px-4 py-3 font-medium">초대코드</th>
-                <th className="text-left px-4 py-3 font-medium">1인당 상금</th>
-                <th className="text-left px-4 py-3 font-medium">계좌제출</th>
-                <th className="text-left px-4 py-3 font-medium">확인</th>
-                <th className="text-left px-4 py-3 font-medium">지급상태</th>
-                <th className="text-left px-4 py-3 font-medium">메모</th>
-                <th className="px-4 py-3 font-medium w-8"></th>
+              <tr className="border-b border-border">
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">등수</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">이름</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">초대코드</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">1인당 상금</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">계좌제출</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">계좌확인</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">지급상태</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">메모</th>
+                <th className="px-3 py-2.5 w-8" />
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map((winner) => {
                 const amount = rankAmounts[winner.prize_rank]
                 return (
-                  <tr key={winner.id} className="hover:bg-accent/30 transition-colors">
-                    <td className="px-4 py-3">
+                  <tr key={winner.id} className="hover:bg-muted/40 transition-colors">
+                    <td className="px-3 py-2.5">
                       <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${RANK_STYLES[winner.prize_rank] ?? ''}`}
+                        className={`inline-flex items-center justify-center text-xs font-bold px-2 py-0.5 rounded-md ${RANK_BADGE[winner.prize_rank] ?? 'bg-muted text-muted-foreground'}`}
                       >
                         {winner.prize_rank}등
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-foreground">{maskName(winner)}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-foreground">
+                    <td className="px-3 py-2.5 text-foreground font-medium tracking-tight">
+                      {maskName(winner)}
+                      {winner.source === 'manual' && (
+                        <span className="ml-1.5 text-[10px] font-medium text-muted-foreground bg-muted px-1 py-0.5 rounded">
+                          수동
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground tracking-tight">
                       {winner.source === 'auto'
                         ? (winner.profiles?.referral_code ?? '—')
                         : (winner.manual_referral_code ?? '—')}
                     </td>
-                    <td className="px-4 py-3 text-foreground tabular-nums">
+                    <td className="px-3 py-2.5 text-foreground tabular-nums tracking-tight font-medium">
                       {amount !== null && amount !== undefined ? formatKRW(amount) : '—'}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2.5">
                       {winner.account_submitted_at ? (
-                        <span className="text-emerald-600 text-xs font-medium">✓ 제출</span>
+                        <span className="inline-flex items-center gap-1 text-emerald-600 text-xs font-semibold">
+                          <CheckCircle2 className="w-3.5 h-3.5" />제출
+                        </span>
                       ) : (
                         <span className="text-muted-foreground text-xs">미제출</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <AccountVerifyToggle
-                        winnerId={winner.id}
-                        verified={winner.account_verified}
-                      />
+                    <td className="px-3 py-2.5">
+                      <AccountVerifyToggle winnerId={winner.id} verified={winner.account_verified} />
                     </td>
-                    <td className="px-4 py-3">
-                      <PaymentStatusButton
-                        winnerId={winner.id}
-                        status={winner.payment_status}
-                      />
+                    <td className="px-3 py-2.5">
+                      <PaymentStatusButton winnerId={winner.id} status={winner.payment_status} />
                     </td>
-                    <td className="px-4 py-3 min-w-[140px]">
-                      <AdminMemoInput
-                        winnerId={winner.id}
-                        memo={winner.admin_memo ?? ''}
-                      />
+                    <td className="px-3 py-2.5 min-w-[140px]">
+                      <AdminMemoInput winnerId={winner.id} memo={winner.admin_memo ?? ''} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2.5">
                       {winner.source === 'manual' && (
                         <DeleteWinnerButton winnerId={winner.id} />
                       )}
@@ -204,7 +218,6 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
           </table>
         )}
       </div>
-
     </div>
   )
 }

@@ -52,29 +52,32 @@ export default async function DrawSection() {
   if (!current && !previous) return null
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {current ? (
-        <CurrentRoundCard
-          roundNumber={current.round_number}
-          drawDate={normalizeToDrawTime(current.draw_date)}
-        />
-      ) : (
-        <div className="rounded-xl border border-border bg-card p-5">
-          <p className="text-sm text-muted-foreground">진행 중인 회차 없음</p>
-        </div>
-      )}
-      {previous ? (
-        <PreviousRoundCard
-          roundNumber={previous.round_number}
-          drawDate={previous.draw_date}
-          winningNumbers={previous.winning_numbers}
-          bonusNumber={previous.bonus_number}
-        />
-      ) : (
-        <div className="rounded-xl border border-border bg-card p-5">
-          <p className="text-sm text-muted-foreground">이전 회차 없음</p>
-        </div>
-      )}
+    <div>
+      <p className="text-sm font-semibold text-foreground tracking-tight mb-4">추첨 현황</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {current ? (
+          <CurrentRoundCard
+            roundNumber={current.round_number}
+            drawDate={normalizeToDrawTime(current.draw_date)}
+          />
+        ) : (
+          <div className="bg-card rounded-xl border border-border p-5">
+            <p className="text-sm text-muted-foreground tracking-tight">진행 중인 회차 없음</p>
+          </div>
+        )}
+        {previous ? (
+          <PreviousRoundCard
+            roundNumber={previous.round_number}
+            drawDate={previous.draw_date}
+            winningNumbers={previous.winning_numbers}
+            bonusNumber={previous.bonus_number}
+          />
+        ) : (
+          <div className="bg-card rounded-xl border border-border p-5">
+            <p className="text-sm text-muted-foreground tracking-tight">이전 회차 없음</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

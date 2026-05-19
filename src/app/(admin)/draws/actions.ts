@@ -8,6 +8,11 @@ import {
   saveAdminMemo,
   addManualWinner,
   deleteManualWinner,
+  getEntryCount,
+  closeDrawForTest,
+  judgeWinnersForTest,
+  publishDrawForTest,
+  resetDrawForTest,
   type PaymentStatus,
 } from '@/lib/supabase/draws'
 
@@ -83,6 +88,69 @@ export async function deleteManualWinnerAction(winnerId: string): Promise<{ erro
   const env = await getAdminEnv()
   try {
     await deleteManualWinner(env, winnerId)
+    revalidateTag('draw-winners', {})
+    return {}
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+  }
+}
+
+export async function getEntryCountAction(drawId: string): Promise<{ count?: number; error?: string }> {
+  const env = await getAdminEnv()
+  try {
+    const count = await getEntryCount(env, drawId)
+    return { count }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+  }
+}
+
+export async function closeDrawAction(drawId: string): Promise<{ error?: string }> {
+  const env = await getAdminEnv()
+  try {
+    await closeDrawForTest(env, drawId)
+    revalidateTag('draws-list', {})
+    return {}
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+  }
+}
+
+export async function judgeWinnersAction(
+  drawId: string,
+  winningNumbers: number[],
+  bonusNumber: number
+): Promise<{ error?: string }> {
+  const env = await getAdminEnv()
+  try {
+    await judgeWinnersForTest(env, drawId, winningNumbers, bonusNumber)
+    revalidateTag('draws-list', {})
+    revalidateTag('draw-winners', {})
+    return {}
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+  }
+}
+
+export async function publishDrawAction(
+  drawId: string,
+  currentRoundNumber: number
+): Promise<{ error?: string }> {
+  const env = await getAdminEnv()
+  try {
+    await publishDrawForTest(env, drawId, currentRoundNumber)
+    revalidateTag('draws-list', {})
+    return {}
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+  }
+}
+
+export async function resetDrawAction(drawId: string): Promise<{ error?: string }> {
+  const env = await getAdminEnv()
+  try {
+    await resetDrawForTest(env, drawId)
+    revalidateTag('draws-list', {})
     revalidateTag('draw-winners', {})
     return {}
   } catch (e) {

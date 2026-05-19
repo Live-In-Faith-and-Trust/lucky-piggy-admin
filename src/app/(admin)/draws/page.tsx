@@ -1,10 +1,11 @@
 export const dynamic = 'force-dynamic'
 
 import { getAdminEnv } from '@/lib/supabase/server'
-import { getDrawList, getWinnerSummary, getWinners1to3 } from '@/lib/supabase/draws'
+import { getDrawList, getWinnerSummary, getWinners1to3, getEntryStats } from '@/lib/supabase/draws'
 import DrawSelector from './DrawSelector'
 import WinnerSummary from './WinnerSummary'
 import WinnerList from './WinnerList'
+import TestControlPanel from './_components/TestControlPanel'
 
 interface SearchParams {
   drawId?: string
@@ -33,9 +34,10 @@ export default async function DrawsPage({
     )
   }
 
-  const [summary, winners] = await Promise.all([
+  const [summary, winners, entryStats] = await Promise.all([
     getWinnerSummary(env, drawId),
     getWinners1to3(env, drawId),
+    getEntryStats(env, drawId),
   ])
 
   const currentDraw = draws.find((d) => d.id === drawId) ?? draws[0]
@@ -50,7 +52,14 @@ export default async function DrawsPage({
         <h1 className="text-lg font-semibold text-foreground">당첨자 관리</h1>
         <DrawSelector draws={draws} currentDrawId={currentDraw?.id ?? drawId} />
       </div>
-      <WinnerSummary summary={summary} />
+      {currentDraw && (
+        <TestControlPanel
+          drawId={currentDraw.id}
+          roundNumber={currentDraw.round_number}
+          status={currentDraw.status}
+        />
+      )}
+      <WinnerSummary summary={summary} entryStats={entryStats} />
       <WinnerList
         winners={winners}
         drawId={drawId}
