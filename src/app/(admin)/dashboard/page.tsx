@@ -67,8 +67,8 @@ export default async function DashboardPage() {
   const { totalUsers, todaySignups, weeklyData, monthlyData } = await getDashboardData()
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-foreground">대시보드</h1>
+    <div className="space-y-6">
+      <h1 className="text-lg font-semibold tracking-tight text-foreground">대시보드</h1>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="relative overflow-visible rounded-xl border border-border bg-card p-5">
@@ -81,19 +81,19 @@ export default async function DashboardPage() {
             className="absolute -bottom-5 -right-6 w-40 h-40 object-contain pointer-events-none select-none"
             aria-hidden
           />
-          <p className="text-xs font-medium text-muted-foreground mb-2">전체 회원수</p>
-          <p className="text-3xl font-bold text-foreground tabular-nums">
+          <p className="text-xs font-medium text-muted-foreground tracking-tight mb-2">전체 회원수</p>
+          <p className="text-2xl font-bold tabular-nums tracking-tight text-foreground">
             {totalUsers === null ? '—' : totalUsers.toLocaleString('ko-KR')}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">명</p>
+          <p className="text-xs text-muted-foreground tracking-tight mt-1">명</p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-5">
-          <p className="text-xs font-medium text-muted-foreground mb-2">오늘 가입자</p>
-          <p className="text-3xl font-bold text-foreground tabular-nums">
+          <p className="text-xs font-medium text-muted-foreground tracking-tight mb-2">오늘 가입자</p>
+          <p className="text-2xl font-bold tabular-nums tracking-tight text-foreground">
             {todaySignups === null ? '—' : todaySignups.toLocaleString('ko-KR')}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">명</p>
+          <p className="text-xs text-muted-foreground tracking-tight mt-1">명</p>
         </div>
       </div>
 

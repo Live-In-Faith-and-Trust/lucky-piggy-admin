@@ -39,10 +39,10 @@ export default function DrawCountdown({ drawDate }: { drawDate: string }) {
     <div className="flex gap-3">
       {units.map(({ label, value }) => (
         <div key={label} className="flex flex-col items-center">
-          <span className="text-2xl font-bold text-foreground tabular-nums">
+          <span className="text-2xl font-bold tabular-nums tracking-tight text-foreground">
             {String(value).padStart(2, '0')}
           </span>
-          <span className="text-xs text-muted-foreground">{label}</span>
+          <span className="text-xs text-muted-foreground tracking-tight">{label}</span>
         </div>
       ))}
     </div>

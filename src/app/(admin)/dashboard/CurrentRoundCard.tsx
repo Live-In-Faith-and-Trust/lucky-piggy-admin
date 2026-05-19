@@ -16,14 +16,14 @@ function formatKSTDate(iso: string): string {
 
 export default function CurrentRoundCard({ roundNumber, drawDate }: Props) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 flex flex-col gap-4">
-      <p className="text-xs font-medium text-muted-foreground">이번 주 추첨</p>
+    <div className="bg-card rounded-xl border border-border p-5 flex flex-col gap-4">
+      <p className="text-xs font-semibold text-muted-foreground tracking-tight uppercase">이번 주 추첨</p>
       <div>
-        <p className="text-2xl font-bold text-foreground">제{roundNumber}회</p>
-        <p className="text-sm text-muted-foreground mt-1">{formatKSTDate(drawDate)} 추첨 예정</p>
+        <p className="text-2xl font-bold tabular-nums tracking-tight text-foreground">제{roundNumber}회</p>
+        <p className="text-xs text-muted-foreground tracking-tight mt-1">{formatKSTDate(drawDate)} 추첨 예정</p>
       </div>
       <div>
-        <p className="text-xs text-muted-foreground mb-2">남은 시간</p>
+        <p className="text-xs text-muted-foreground tracking-tight mb-2">남은 시간</p>
         <DrawCountdown drawDate={drawDate} />
       </div>
     </div>

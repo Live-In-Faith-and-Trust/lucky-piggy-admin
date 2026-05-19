@@ -49,25 +49,97 @@
 
 ---
 
+## Lucky Piggy 디자인 시스템 토큰
+
+앱 레포의 `ui_kit` 디자인 시스템을 어드민에 동기화하여 적용한다. 모든 토큰은 `src/app/globals.css`에 정의되어 있다.
+
+### 색상 팔레트
+
+**브랜드**
+| 토큰 | 값 | 용도 |
+|------|-----|------|
+| `--primary` | `#FFDD13` (골든 옐로우) | CTA 버튼, 활성 메뉴 배경 |
+| `--primary-foreground` | `#1A1A1A` | primary 위 텍스트 |
+
+**Neutral Scale**
+| 토큰 | 값 |
+|------|----|
+| `--neutral-50` | `#FAFAFA` |
+| `--neutral-100` | `#F5F5F5` |
+| `--neutral-200` | `#E0E0E0` |
+| `--neutral-300` | `#CCCCCC` |
+| `--neutral-400` | `#AAAAAA` |
+| `--neutral-500` | `#888888` |
+| `--neutral-600` | `#5C5C5C` |
+| `--neutral-700` | `#3D3D3D` |
+| `--neutral-800` | `#2A2A2A` |
+| `--neutral-900` | `#1A1A1A` |
+
+**Accent Blue** (정보 카드, 링크, 강조 텍스트)
+| 토큰 | 값 | 용도 |
+|------|-----|------|
+| `--accent-blue` | `#1A4FD8` | 텍스트, 아이콘 |
+| `--accent-blue-surface` | `#EEF2FF` | 배경 카드 |
+
+**Status Surfaces**
+| 토큰 | 값 | 용도 |
+|------|-----|------|
+| `--success-surface` | `#DCFCE7` | 성공/완료 배경 |
+| `--error-surface` | `#FEE2E2` | 에러/위험 배경 |
+| `--warning-surface` | `#FEF3C7` | 경고 배경 |
+| `--info` | `#3B82F6` | 정보 아이콘/텍스트 |
+| `--info-surface` | `#DBEAFE` | 정보 배경 |
+
+**Lottery Ball Colors** (LottoBall 컴포넌트 전용)
+| 토큰 | 값 | 번호 범위 |
+|------|-----|----------|
+| `--lottery-yellow` | `#FBC400` | 1–10 |
+| `--lottery-blue` | `#69C8F2` | 11–20 |
+| `--lottery-red` | `#FF7272` | 21–30 |
+| `--lottery-gray` | `#AAAAAA` | 31–40 |
+| `--lottery-green` | `#B0D840` | 41–45 |
+| (보너스볼) | `#FE6A86` | 보너스 |
+
+---
+
 ## 컬러 / 타이포 가이드
 
-**기반: shadcn/ui CSS Variables (HSL)**
+**기반: shadcn/ui CSS Variables + Lucky Piggy 디자인 시스템**
 
 | 역할 | 토큰 | 용도 |
 |------|------|------|
-| 브랜드 Primary | `--primary` → 골든 옐로우 `#F5A623` 계열 | CTA 버튼, 활성 메뉴 |
-| 브랜드 Secondary | `--secondary` → 핑크/레드 `#E8384D` 계열 | 뱃지, 강조 상태 |
-| 성공 | `--success` → `#22C55E` | 당첨, 완료, 정상 |
-| 경고 | `--warning` → `#F59E0B` | 주의 상태, 대기 중 |
-| 위험 | `--destructive` | 삭제, 정지, 차단 |
+| 브랜드 Primary | `--primary` `#FFDD13` | CTA 버튼, 활성 메뉴 |
+| Accent Blue | `--accent-blue` `#1A4FD8` | 정보 카드 레이블, 강조 링크 |
+| 성공 | `--success-surface` | 당첨, 완료 상태 배경 |
+| 경고 | `--warning-surface` | 주의 상태 배경 |
+| 위험 | `--destructive` / `--error-surface` | 삭제, 정지, 에러 |
 
 **타이포그래피 (한국어 지원)**
 - Font: `Pretendard` (fallback: `system-ui`)
-- Page Title: 24px / 700
-- Section Title: 18px / 600
-- Table Header: 12px / 600 / uppercase / muted
-- Body: 14px / 400
-- Caption: 12px / 400 / muted
+- 모든 heading(`h1`–`h6`): `font-semibold tracking-tight`
+- 모든 body text(`p`, `span`, `label`, `td`, `th`): `tracking-tight`
+- Page Title: 18px / `font-semibold` / `text-foreground`
+- Section Title: 14px / `font-semibold`
+- Table Header: 12px / `font-medium` / `text-muted-foreground`
+- Body: 14px / normal
+- Caption / 보조 정보: 12px / `text-muted-foreground`
+- 숫자 (금액, 카운트): `tabular-nums tracking-tight`
+
+### Border Radius 스케일
+
+앱 디자인 시스템 기준으로 고정. Tailwind `rounded-*` 유틸리티와 1:1 매핑된다.
+
+| 토큰 | 값 | Tailwind | 용도 |
+|------|----|----------|------|
+| `--radius-sm` | `4px` | `rounded-sm` | 태그, 뱃지 |
+| `--radius-md` / `--radius` | `8px` | `rounded-md` | 버튼, 입력, 카드 |
+| `--radius-lg` | `16px` | `rounded-lg` | 모달, 패널 |
+| `--radius-xl` | `24px` | `rounded-xl` | 요약 카드 |
+| `--radius-2xl` | `32px` | `rounded-2xl` | 대형 카드 |
+| `--radius-3xl` | `50px` | `rounded-3xl` | 복권 번호 볼 |
+| `--radius-4xl` | `100px` | `rounded-4xl` | 로또볼(앱 전용) |
+
+> 버튼·입력은 `rounded-md`, 요약/정보 카드는 `rounded-xl` 사용 권장.
 
 ---
 
@@ -153,6 +225,9 @@
 - [ ] 포커스 링이 모든 인터랙티브 요소에 표시되는가
 
 ### 브랜드 & 톤
-- [ ] 브랜드 컬러가 포인트 용도로만 사용되었는가 (배경 도배 금지)
+- [ ] Primary 골든 옐로우(`#FFDD13`)가 포인트 용도로만 사용되었는가 (배경 도배 금지)
+- [ ] 정보 카드에 `accent-blue` / `accent-blue-surface` 토큰이 사용되었는가
+- [ ] 숫자·금액 표시에 `tabular-nums tracking-tight` 클래스가 적용되었는가
 - [ ] 한국어 텍스트에 Pretendard 폰트가 적용되었는가
 - [ ] 어드민 전체 톤이 비즈니스 툴 톤을 유지하는가
+- [ ] 버튼·입력에 `rounded-md`, 요약 카드에 `rounded-xl`이 사용되었는가

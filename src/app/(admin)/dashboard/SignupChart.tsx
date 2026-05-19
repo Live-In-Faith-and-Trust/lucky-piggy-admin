@@ -38,8 +38,8 @@ export default function SignupChart({ weeklyData, monthlyData }: Props) {
       {/* 헤더 */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <p className="text-sm font-semibold text-foreground">가입자 추이</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-sm font-semibold tracking-tight text-foreground">가입자 추이</p>
+          <p className="text-xs text-muted-foreground tracking-tight mt-0.5">
             {tab === 'week' ? '최근 7일' : '최근 30일'} 합계{' '}
             <span className="font-semibold text-foreground">{total.toLocaleString('ko-KR')}명</span>
           </p>
@@ -67,14 +67,14 @@ export default function SignupChart({ weeklyData, monthlyData }: Props) {
         <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="signupFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#6366f1" stopOpacity={0.18} />
-              <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+              <stop offset="0%" stopColor="#1A4FD8" stopOpacity={0.15} />
+              <stop offset="100%" stopColor="#1A4FD8" stopOpacity={0} />
             </linearGradient>
           </defs>
 
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="var(--border)"
+            stroke="#E0E0E0"
             vertical={false}
           />
           <XAxis
@@ -94,23 +94,23 @@ export default function SignupChart({ weeklyData, monthlyData }: Props) {
           <Tooltip
             contentStyle={{
               background: 'var(--card)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
+              border: '1px solid #E0E0E0',
+              borderRadius: '8px',
               fontSize: 12,
               boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
             }}
             labelStyle={{ color: 'var(--muted-foreground)', marginBottom: 2 }}
             formatter={(value) => [`${Number(value).toLocaleString('ko-KR')}명`, '신규 가입']}
-            cursor={{ stroke: 'var(--border)', strokeWidth: 1 }}
+            cursor={{ stroke: '#E0E0E0', strokeWidth: 1 }}
           />
           <Area
             type="monotone"
             dataKey="count"
-            stroke="#6366f1"
+            stroke="#1A4FD8"
             strokeWidth={2}
             fill="url(#signupFill)"
             dot={false}
-            activeDot={{ r: 4, fill: '#6366f1', strokeWidth: 0 }}
+            activeDot={{ r: 4, fill: '#1A4FD8', strokeWidth: 0 }}
           />
         </AreaChart>
       </ResponsiveContainer>

@@ -51,6 +51,11 @@ export interface WinnerRankSummary {
   per_winner_amount: number | null
 }
 
+export interface DrawEntryStats {
+  entrant_count: number  // 응모 인원 (distinct user)
+  entry_count: number    // 응모 수 (총 응모권)
+}
+
 // ── Cache tags (static) ─────────────────────────────────────────────────────
 // revalidateTag('draws-list') — 회차 목록 새로고침
 // revalidateTag('draw-winners') — 당첨자 데이터 새로고침
@@ -70,6 +75,23 @@ export const getDrawList = unstable_cache(
   },
   ['draws-list'],
   { revalidate: 300, tags: ['draws-list'] }
+)
+
+export const getEntryStats = unstable_cache(
+  async (env: AdminEnv, drawId: string): Promise<DrawEntryStats> => {
+    const supabase = createServerClient(env)
+    const { data, error } = await supabase
+      .from('draw_entries')
+      .select('user_id')
+      .eq('draw_id', drawId)
+    if (error) throw error
+    const rows = data ?? []
+    const entrant_count = new Set(rows.map((r) => r.user_id)).size
+    const entry_count = rows.length
+    return { entrant_count, entry_count }
+  },
+  ['draw-entry-stats'],
+  { revalidate: 300, tags: ['draw-winners'] }
 )
 
 export const getWinnerSummary = unstable_cache(
@@ -243,4 +265,122 @@ export async function deleteManualWinner(
   if (data.source !== 'manual') throw new Error('자동 당첨자는 삭제할 수 없습니다')
   const { error } = await supabase.from('draw_winners').delete().eq('id', winnerId)
   if (error) throw error
+}
+
+// ── Test-only: Draw process simulation ──────────────────────────────────────
+
+export async function getEntryCount(env: AdminEnv, drawId: string): Promise<number> {
+  const supabase = createServerClient(env)
+  const { count, error } = await supabase
+    .from('draw_entries')
+    .select('*', { count: 'exact', head: true })
+    .eq('draw_id', drawId)
+  if (error) throw error
+  return count ?? 0
+}
+
+export async function closeDrawForTest(env: AdminEnv, drawId: string): Promise<void> {
+  const supabase = createServerClient(env)
+  const { error } = await supabase
+    .from('draws')
+    .update({ status: 'closed' })
+    .eq('id', drawId)
+    .eq('status', 'active')
+  if (error) throw error
+}
+
+export async function judgeWinnersForTest(
+  env: AdminEnv,
+  drawId: string,
+  winningNumbers: number[],
+  bonusNumber: number
+): Promise<void> {
+  const supabase = createServerClient(env)
+
+  // 1. 당첨번호 저장 (RPC 실행 전 필수)
+  const { error: updateErr } = await supabase
+    .from('draws')
+    .update({ winning_numbers: winningNumbers, bonus_number: bonusNumber })
+    .eq('id', drawId)
+  if (updateErr) throw updateErr
+
+  // 2. judge_draw_winners RPC 실행 — draw_entries 업데이트 + draw_winners 삽입
+  const { error: rpcErr } = await supabase.rpc('judge_draw_winners', { p_draw_id: drawId })
+  if (rpcErr) throw rpcErr
+
+  // 3. RPC는 draws.status를 바꾸지 않으므로 직접 업데이트
+  const { error: statusErr } = await supabase
+    .from('draws')
+    .update({ status: 'drawn' })
+    .eq('id', drawId)
+  if (statusErr) throw statusErr
+}
+
+export async function publishDrawForTest(
+  env: AdminEnv,
+  drawId: string,
+  currentRoundNumber: number
+): Promise<void> {
+  const supabase = createServerClient(env)
+
+  // 1. 현재 회차 완료 처리
+  const { error: completeErr } = await supabase
+    .from('draws')
+    .update({ status: 'completed' })
+    .eq('id', drawId)
+  if (completeErr) throw completeErr
+
+  // 2. 다음 회차 활성화 (round_number = current + 1)
+  const { data: nextDraw, error: nextErr } = await supabase
+    .from('draws')
+    .select('id')
+    .eq('round_number', currentRoundNumber + 1)
+    .single()
+  if (nextErr && nextErr.code !== 'PGRST116') throw nextErr
+
+  if (nextDraw) {
+    const { error: activateErr } = await supabase
+      .from('draws')
+      .update({ status: 'active' })
+      .eq('id', nextDraw.id)
+    if (activateErr) throw activateErr
+  } else {
+    // 다음 회차가 없으면 새 active 회차 생성
+    const now = new Date()
+    const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+    const { error: createErr } = await supabase.from('draws').insert({
+      round_number: currentRoundNumber + 1,
+      status: 'active',
+      start_date: now.toISOString(),
+      end_date: weekLater.toISOString(),
+      draw_date: weekLater.toISOString(),
+    })
+    if (createErr) throw createErr
+  }
+}
+
+export async function resetDrawForTest(env: AdminEnv, drawId: string): Promise<void> {
+  const supabase = createServerClient(env)
+
+  // 1. draw_winners 전체 삭제
+  const { error: winnersErr } = await supabase
+    .from('draw_winners')
+    .delete()
+    .eq('draw_id', drawId)
+  if (winnersErr) throw winnersErr
+
+  // 2. draw_entries won/lost → entered 롤백
+  const { error: entriesErr } = await supabase
+    .from('draw_entries')
+    .update({ status: 'entered' })
+    .eq('draw_id', drawId)
+    .in('status', ['won', 'lost'])
+  if (entriesErr) throw entriesErr
+
+  // 3. draws 상태 롤백
+  const { error: drawErr } = await supabase
+    .from('draws')
+    .update({ status: 'active', winning_numbers: null, bonus_number: null })
+    .eq('id', drawId)
+  if (drawErr) throw drawErr
 }

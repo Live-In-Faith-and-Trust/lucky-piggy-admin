@@ -1,19 +1,23 @@
 // src/app/(admin)/dashboard/LottoBall.tsx
 
-function getBallColor(n: number): string {
-  if (n <= 9) return '#FBC400'
-  if (n <= 19) return '#69C8F2'
-  if (n <= 29) return '#FF7272'
-  if (n <= 39) return '#AAAAAA'
-  return '#B0D840'
+type BallStyle = { bg: string; text: string }
+
+function getBallStyle(n: number): BallStyle {
+  if (n <= 10) return { bg: '#FBC400', text: '#1A1A1A' }
+  if (n <= 20) return { bg: '#69C8F2', text: '#1A1A1A' }
+  if (n <= 30) return { bg: '#FF7272', text: '#FFFFFF' }
+  if (n <= 40) return { bg: '#AAAAAA', text: '#FFFFFF' }
+  return { bg: '#B0D840', text: '#1A1A1A' }
 }
 
-export default function LottoBall({ number }: { number: number }) {
-  const bg = getBallColor(number)
+const BONUS_STYLE: BallStyle = { bg: '#FE6A86', text: '#FFFFFF' }
+
+export default function LottoBall({ number, isBonus = false }: { number: number; isBonus?: boolean }) {
+  const { bg, text } = isBonus ? BONUS_STYLE : getBallStyle(number)
   return (
     <div
-      className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm"
-      style={{ backgroundColor: bg }}
+      className="size-8 rounded-full flex items-center justify-center text-xs font-bold tabular-nums"
+      style={{ backgroundColor: bg, color: text }}
     >
       {number}
     </div>

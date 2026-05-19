@@ -71,6 +71,24 @@
 2. 당첨자 명단 검토 (부정 사용자 필터) → 확정 → 푸시 발송
 3. 상품권/포인트 지급 → 완료 상태 업데이트 → 미지급 건 재처리
 
+### 테스트 컨트롤 패널 (당첨자 관리 상단)
+
+cron 스케줄 없이 추첨 프로세스 전 단계를 수동으로 시뮬레이션하는 패널.
+스테이징/개발 환경에서 QA 용도로 사용. 프로덕션에서도 표시되나 강한 경고 배너 노출.
+
+| 버튼 | 활성 조건 | 실행 내용 |
+|------|-----------|-----------|
+| [Step 1] 응모 마감 | status = active | draws.status → closed (end_date 무시) |
+| [Step 2] 당첨자 판정 | status = closed | winning_numbers/bonus 저장 → judge_draw_winners RPC → status → drawn |
+| [Step 3] 당첨자 발표 | status = drawn | status → completed, 다음 회차 활성화 (푸시 생략) |
+| 초기화 | status ≠ completed | draw_winners 삭제 + draw_entries 롤백 + status → active |
+
+**환경 표시:** 헤더에 STAGING / ⚠️ PRODUCTION / LOCAL·DEV 배지 노출.
+**관련 파일:**
+- `src/app/(admin)/draws/_components/TestControlPanel.tsx`
+- `src/app/(admin)/draws/actions.ts` — closeDrawAction, judgeWinnersAction, publishDrawAction, resetDrawAction
+- `src/lib/supabase/draws.ts` — closeDrawForTest, judgeWinnersForTest, publishDrawForTest, resetDrawForTest
+
 ### 쿠폰 발급 프로세스
 1. 쿠폰 조건 입력 (금액, 수량, 만료일) → 코드 생성
 2. 배포 채널 설정 → 사용 현황 모니터링

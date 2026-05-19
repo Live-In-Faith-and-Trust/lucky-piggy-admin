@@ -38,7 +38,7 @@ export default function AdminHeader({ defaultEnv }: { defaultEnv: AdminEnv }) {
   const cfg = envConfig[env]
 
   return (
-    <header className="flex h-14 flex-shrink-0 items-center justify-between border-b border-border bg-card px-6">
+    <header className="flex h-12 flex-shrink-0 items-center justify-between border-b border-border bg-card px-5">
       <span className="text-sm font-semibold text-foreground">당첨돼지 admin</span>
 
       <div className="flex items-center gap-3">
