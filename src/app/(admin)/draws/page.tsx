@@ -5,6 +5,7 @@ import { getDrawList, getWinnerSummary, getWinners1to3, getEntryStats } from '@/
 import DrawSelector from './DrawSelector'
 import WinnerSummary from './WinnerSummary'
 import WinnerList from './WinnerList'
+import WinningNumbers from './WinningNumbers'
 import TestControlPanel from './_components/TestControlPanel'
 
 interface SearchParams {
@@ -20,7 +21,7 @@ export default async function DrawsPage({
   const env = await getAdminEnv()
   const draws = await getDrawList(env)
 
-  const defaultDraw = draws.find((d) => d.status === 'completed') ?? draws[0]
+  const defaultDraw = draws.find((d) => d.status !== 'upcoming') ?? draws[0]
   const drawId = params.drawId ?? defaultDraw?.id ?? null
 
   if (!drawId) {
@@ -59,6 +60,7 @@ export default async function DrawsPage({
           status={currentDraw.status}
         />
       )}
+      {currentDraw && <WinningNumbers draw={currentDraw} />}
       <WinnerSummary summary={summary} entryStats={entryStats} />
       <WinnerList
         winners={winners}

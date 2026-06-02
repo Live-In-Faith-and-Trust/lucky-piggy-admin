@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
-export type AdminEnv = 'staging' | 'production'
+export type AdminEnv = 'production' | 'staging' | 'local'
 
 const envConfigs: Record<AdminEnv, { urlKey: string; serviceKeyName: string }> = {
   production: {
@@ -11,6 +11,10 @@ const envConfigs: Record<AdminEnv, { urlKey: string; serviceKeyName: string }> =
   staging: {
     urlKey: 'NEXT_PUBLIC_SUPABASE_URL_STAGING',
     serviceKeyName: 'SUPABASE_SERVICE_ROLE_KEY_STAGING',
+  },
+  local: {
+    urlKey: 'NEXT_PUBLIC_SUPABASE_URL_LOCAL',
+    serviceKeyName: 'SUPABASE_SERVICE_ROLE_KEY_LOCAL',
   },
 }
 
@@ -31,7 +35,9 @@ export function createServerClient(env: AdminEnv = 'production') {
 export async function getAdminEnv(): Promise<AdminEnv> {
   const cookieStore = await cookies()
   const val = cookieStore.get('admin_env')?.value
-  return val === 'staging' ? 'staging' : 'production'
+  if (val === 'staging') return 'staging'
+  if (val === 'local') return 'local'
+  return 'production'
 }
 
 export async function getSupabaseClient() {

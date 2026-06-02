@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getAdminEnv } from '@/lib/supabase/server'
 import {
   toggleAccountVerified,
@@ -109,7 +109,7 @@ export async function closeDrawAction(drawId: string): Promise<{ error?: string 
   const env = await getAdminEnv()
   try {
     await closeDrawForTest(env, drawId)
-    revalidateTag('draws-list', {})
+    revalidatePath('/draws')
     return {}
   } catch (e) {
     return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
@@ -124,8 +124,7 @@ export async function judgeWinnersAction(
   const env = await getAdminEnv()
   try {
     await judgeWinnersForTest(env, drawId, winningNumbers, bonusNumber)
-    revalidateTag('draws-list', {})
-    revalidateTag('draw-winners', {})
+    revalidatePath('/draws')
     return {}
   } catch (e) {
     return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
@@ -139,7 +138,7 @@ export async function publishDrawAction(
   const env = await getAdminEnv()
   try {
     await publishDrawForTest(env, drawId, currentRoundNumber)
-    revalidateTag('draws-list', {})
+    revalidatePath('/draws')
     return {}
   } catch (e) {
     return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
@@ -150,8 +149,7 @@ export async function resetDrawAction(drawId: string): Promise<{ error?: string 
   const env = await getAdminEnv()
   try {
     await resetDrawForTest(env, drawId)
-    revalidateTag('draws-list', {})
-    revalidateTag('draw-winners', {})
+    revalidatePath('/draws')
     return {}
   } catch (e) {
     return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }

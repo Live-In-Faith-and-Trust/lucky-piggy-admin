@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState, useTransition, useEffect } from 'react'
 import { FlaskConical, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
 import {
@@ -36,7 +35,6 @@ const ENV_BADGE = ENV === 'production'
 const EMPTY_NUMBERS = ['', '', '', '', '', ''] as const
 
 export default function TestControlPanel({ drawId, roundNumber, status }: Props) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   const [collapsed, setCollapsed] = useState(false)
@@ -68,8 +66,6 @@ export default function TestControlPanel({ drawId, roundNumber, status }: Props)
       const result = await fn()
       if (result?.error) {
         setError(result.error)
-      } else {
-        router.refresh()
       }
     })
   }

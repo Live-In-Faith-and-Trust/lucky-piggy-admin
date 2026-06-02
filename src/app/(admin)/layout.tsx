@@ -5,7 +5,8 @@ import type { AdminEnv } from '@/lib/supabase/server'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
-  const env = (cookieStore.get('admin_env')?.value === 'staging' ? 'staging' : 'production') as AdminEnv
+  const cookieEnv = cookieStore.get('admin_env')?.value
+  const env: AdminEnv = cookieEnv === 'staging' ? 'staging' : cookieEnv === 'local' ? 'local' : 'production'
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">

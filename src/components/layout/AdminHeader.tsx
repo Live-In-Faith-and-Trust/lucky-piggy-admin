@@ -19,7 +19,15 @@ const envConfig = {
     badge: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
     spinner: 'border-amber-400',
   },
+  local: {
+    label: 'Local',
+    dot: 'bg-violet-400',
+    badge: 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100',
+    spinner: 'border-violet-400',
+  },
 } satisfies Record<AdminEnv, { label: string; dot: string; badge: string; spinner: string }>
+
+const isLocalAvailable = !!process.env.NEXT_PUBLIC_SUPABASE_URL_LOCAL
 
 export default function AdminHeader({ defaultEnv }: { defaultEnv: AdminEnv }) {
   const router = useRouter()
@@ -79,6 +87,7 @@ export default function AdminHeader({ defaultEnv }: { defaultEnv: AdminEnv }) {
           >
             <option value="production">Production</option>
             <option value="staging">Staging</option>
+            {isLocalAvailable && <option value="local">Local</option>}
           </select>
         </div>
 
