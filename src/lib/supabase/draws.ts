@@ -114,9 +114,10 @@ export const getWinnerSummary = unstable_cache(
       prizeMap[p.prize_rank] = p.amount
     }
 
+    const hasPrizeData = Object.keys(prizeMap).length > 0
     return [1, 2, 3, 4, 5].map((rank) => {
       const count = countMap[rank] ?? 0
-      const amount = prizeMap[rank] ?? null
+      const amount = prizeMap[rank] ?? (hasPrizeData ? null : (DEFAULT_PRIZE_AMOUNTS[rank] ?? null))
       return {
         prize_rank: rank,
         count,
@@ -350,6 +351,8 @@ export async function publishDrawForTest(
     const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
     const { error: createErr } = await supabase.from('draws').insert({
       round_number: currentRoundNumber + 1,
+      title: '주간 응모',
+      description: '응모권으로 참여하는 주간 추첨',
       status: 'active',
       start_date: now.toISOString(),
       end_date: weekLater.toISOString(),
@@ -359,7 +362,7 @@ export async function publishDrawForTest(
   }
 }
 
-export async function resetDrawForTest(env: AdminEnv, drawId: string): Promise<void> {
+export async function resetDrawForTest(env: AdminEnv, drawId: string, currentRoundNumber: number): Promise<void> {
   const supabase = createServerClient(env)
 
   // 1. draw_winners 전체 삭제
@@ -369,15 +372,46 @@ export async function resetDrawForTest(env: AdminEnv, drawId: string): Promise<v
     .eq('draw_id', drawId)
   if (winnersErr) throw winnersErr
 
-  // 2. draw_entries won/lost → entered 롤백
+  // 2. draw_entries 전체 삭제 (테스트 초기화 — 앱에서 재응모 필요)
   const { error: entriesErr } = await supabase
     .from('draw_entries')
-    .update({ status: 'entered' })
+    .delete()
     .eq('draw_id', drawId)
-    .in('status', ['won', 'lost'])
   if (entriesErr) throw entriesErr
 
-  // 3. draws 상태 롤백
+  // 3. 다음 회차 cleanup (completed 상태에서 publishDraw로 생성된 다음 회차 삭제)
+  //    - draw_entries가 없는 경우에만 삭제 (테스트로 생성된 빈 회차)
+  //    - 있으면 upcoming으로 되돌리기
+  const { data: nextDraw } = await supabase
+    .from('draws')
+    .select('id, status')
+    .eq('round_number', currentRoundNumber + 1)
+    .maybeSingle()
+
+  if (nextDraw) {
+    const { count: entryCount } = await supabase
+      .from('draw_entries')
+      .select('*', { count: 'exact', head: true })
+      .eq('draw_id', nextDraw.id)
+
+    if (!entryCount || entryCount === 0) {
+      // 응모자 없음 → 삭제
+      const { error: deleteNextErr } = await supabase
+        .from('draws')
+        .delete()
+        .eq('id', nextDraw.id)
+      if (deleteNextErr) throw deleteNextErr
+    } else {
+      // 응모자 있음 → upcoming으로 복원
+      const { error: revertNextErr } = await supabase
+        .from('draws')
+        .update({ status: 'upcoming' })
+        .eq('id', nextDraw.id)
+      if (revertNextErr) throw revertNextErr
+    }
+  }
+
+  // 4. 현재 draws 상태 롤백
   const { error: drawErr } = await supabase
     .from('draws')
     .update({ status: 'active', winning_numbers: null, bonus_number: null })
