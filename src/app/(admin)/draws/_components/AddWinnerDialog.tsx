@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
 import { addManualWinnerAction } from '@/app/(admin)/draws/actions'
 import { BANKS } from '@/lib/banks'
@@ -13,7 +12,6 @@ interface Props {
 export default function AddWinnerDialog({ drawId }: Props) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
 
   const [userId, setUserId] = useState('')
@@ -23,6 +21,7 @@ export default function AddWinnerDialog({ drawId }: Props) {
   const [accountNumber, setAccountNumber] = useState('')
   const [accountHolder, setAccountHolder] = useState('')
   const [adminMemo, setAdminMemo] = useState('')
+  const [manualEntryCount, setManualEntryCount] = useState('')
 
   const handleClose = () => {
     if (isPending) return
@@ -35,6 +34,7 @@ export default function AddWinnerDialog({ drawId }: Props) {
     setAccountNumber('')
     setAccountHolder('')
     setAdminMemo('')
+    setManualEntryCount('')
   }
 
   useEffect(() => {
@@ -48,6 +48,12 @@ export default function AddWinnerDialog({ drawId }: Props) {
     e.preventDefault()
     setError(null)
 
+    const entryCountNum = parseInt(manualEntryCount, 10)
+    if (!manualEntryCount || isNaN(entryCountNum) || entryCountNum < 1) {
+      setError('응모 횟수를 1 이상 입력하세요.')
+      return
+    }
+
     const selectedBank = BANKS.find((b) => b.code === bankCode)
 
     startTransition(async () => {
@@ -60,12 +66,12 @@ export default function AddWinnerDialog({ drawId }: Props) {
         account_number: accountNumber || undefined,
         account_holder: accountHolder || undefined,
         admin_memo: adminMemo || undefined,
+        manual_entry_count: entryCountNum,
       })
       if (result.error) {
         setError(result.error)
       } else {
         handleClose()
-        router.refresh()
       }
     })
   }
@@ -120,6 +126,23 @@ export default function AddWinnerDialog({ drawId }: Props) {
                   <option value="2">2등</option>
                   <option value="3">3등</option>
                 </select>
+              </div>
+
+              {/* 응모 횟수 */}
+              <div className="space-y-1">
+                <label htmlFor="aw-entry-count" className={labelClass}>
+                  응모 횟수 <span className="text-muted-foreground/60">(필수)</span>
+                </label>
+                <input
+                  id="aw-entry-count"
+                  type="number"
+                  min={1}
+                  value={manualEntryCount}
+                  onChange={(e) => setManualEntryCount(e.target.value)}
+                  placeholder="0"
+                  required
+                  className={inputClass}
+                />
               </div>
 
               {/* 실명 */}

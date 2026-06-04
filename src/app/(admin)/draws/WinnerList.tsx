@@ -9,6 +9,7 @@ import PaymentStatusButton from './_components/PaymentStatusButton'
 import AdminMemoInput from './_components/AdminMemoInput'
 import AddWinnerDialog from './_components/AddWinnerDialog'
 import DeleteWinnerButton from './_components/DeleteWinnerButton'
+import ManualEntryCountInput from './_components/ManualEntryCountInput'
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
   pending: '미지급',
@@ -147,6 +148,7 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">당첨소감</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">초대코드</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">1인당 상금</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">응모수</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">계좌제출</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">은행</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">계좌번호</th>
@@ -187,6 +189,20 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
                     </td>
                     <td className="px-3 py-2.5 text-foreground tabular-nums tracking-tight font-medium">
                       {amount !== null && amount !== undefined ? formatKRW(amount) : '—'}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {winner.source === 'manual' ? (
+                        <ManualEntryCountInput
+                          winnerId={winner.id}
+                          count={winner.manual_entry_count}
+                        />
+                      ) : (
+                        <span className="text-xs tabular-nums text-foreground">
+                          {winner._auto_entry_count != null && winner._auto_entry_count > 0
+                            ? `${winner._auto_entry_count}장`
+                            : '—'}
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-2.5">
                       {winner.account_submitted_at ? (

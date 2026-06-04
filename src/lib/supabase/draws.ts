@@ -42,6 +42,8 @@ export interface DrawWinner {
   updated_at: string
   profiles?: { nickname: string | null; referral_code: string | null } | null
   manual_referral_code: string | null
+  manual_entry_count: number | null
+  _auto_entry_count?: number | null
 }
 
 export interface WinnerRankSummary {
@@ -141,7 +143,33 @@ export const getWinners1to3 = unstable_cache(
       .order('prize_rank', { ascending: true })
       .order('created_at', { ascending: true })
     if (error) throw error
-    return (data ?? []) as DrawWinner[]
+
+    const winners = (data ?? []) as DrawWinner[]
+
+    const autoUserIds = winners
+      .filter((w) => w.source === 'auto' && w.user_id)
+      .map((w) => w.user_id as string)
+
+    let entryCountByUserId: Record<string, number> = {}
+    if (autoUserIds.length > 0) {
+      const { data: entries } = await supabase
+        .from('draw_entries')
+        .select('user_id')
+        .eq('draw_id', drawId)
+        .in('user_id', autoUserIds)
+      for (const e of entries ?? []) {
+        if (e.user_id) {
+          entryCountByUserId[e.user_id] = (entryCountByUserId[e.user_id] ?? 0) + 1
+        }
+      }
+    }
+
+    return winners.map((w) => ({
+      ...w,
+      _auto_entry_count: w.source === 'auto' && w.user_id
+        ? (entryCountByUserId[w.user_id] ?? 0)
+        : null,
+    }))
   },
   ['draw-winners-1to3'],
   { revalidate: 300, tags: ['draw-winners'] }
@@ -180,6 +208,7 @@ export async function addManualWinner(
     account_holder?: string
     winner_comment?: string
     admin_memo?: string
+    manual_entry_count: number
   }
 ): Promise<void> {
   const supabase = createServerClient(env)
@@ -247,6 +276,19 @@ export async function saveAdminMemo(
   const { error } = await supabase
     .from('draw_winners')
     .update({ admin_memo: memo })
+    .eq('id', winnerId)
+  if (error) throw error
+}
+
+export async function updateManualEntryCount(
+  env: AdminEnv,
+  winnerId: string,
+  count: number,
+): Promise<void> {
+  const supabase = createServerClient(env)
+  const { error } = await supabase
+    .from('draw_winners')
+    .update({ manual_entry_count: count })
     .eq('id', winnerId)
   if (error) throw error
 }
