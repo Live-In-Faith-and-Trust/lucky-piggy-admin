@@ -20,6 +20,7 @@ export default function AddWinnerDialog({ drawId }: Props) {
   const [bankCode, setBankCode] = useState('')
   const [accountNumber, setAccountNumber] = useState('')
   const [accountHolder, setAccountHolder] = useState('')
+  const [winnerComment, setWinnerComment] = useState('')
   const [adminMemo, setAdminMemo] = useState('')
   const [manualEntryCount, setManualEntryCount] = useState('')
 
@@ -33,6 +34,7 @@ export default function AddWinnerDialog({ drawId }: Props) {
     setBankCode('')
     setAccountNumber('')
     setAccountHolder('')
+    setWinnerComment('')
     setAdminMemo('')
     setManualEntryCount('')
   }
@@ -65,6 +67,7 @@ export default function AddWinnerDialog({ drawId }: Props) {
         bank_name: selectedBank?.name || undefined,
         account_number: accountNumber || undefined,
         account_holder: accountHolder || undefined,
+        winner_comment: winnerComment || undefined,
         admin_memo: adminMemo || undefined,
         manual_entry_count: entryCountNum,
       })
@@ -210,6 +213,21 @@ export default function AddWinnerDialog({ drawId }: Props) {
                     className={inputClass}
                   />
                 </div>
+              </div>
+
+              {/* 당첨 소감 */}
+              <div className="space-y-1">
+                <label htmlFor="aw-winner-comment" className={labelClass}>
+                  당첨 소감 <span className="text-muted-foreground/60">(선택 — 앱 당첨자 화면에 표시)</span>
+                </label>
+                <textarea
+                  id="aw-winner-comment"
+                  value={winnerComment}
+                  onChange={(e) => setWinnerComment(e.target.value)}
+                  placeholder="당첨 소감을 입력하세요..."
+                  rows={2}
+                  className={`${inputClass} resize-none`}
+                />
               </div>
 
               {/* 어드민 메모 */}
