@@ -10,6 +10,7 @@ import AdminMemoInput from './_components/AdminMemoInput'
 import AddWinnerDialog from './_components/AddWinnerDialog'
 import DeleteWinnerButton from './_components/DeleteWinnerButton'
 import ManualEntryCountInput from './_components/ManualEntryCountInput'
+import EditManualWinnerDialog from './_components/EditManualWinnerDialog'
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
   pending: '미지급',
@@ -171,11 +172,12 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
                         {winner.prize_rank}등
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-foreground font-medium tracking-tight">
-                      {winner.real_name ?? winner.profiles?.nickname ?? '—'}
-                      {winner.source === 'manual' && (
-                        <span className="ml-1.5 text-[10px] font-medium text-muted-foreground bg-muted px-1 py-0.5 rounded">
-                          수동
+                    <td className="px-3 py-2.5 font-medium tracking-tight">
+                      {winner.source === 'manual' ? (
+                        <EditManualWinnerDialog winner={winner} />
+                      ) : (
+                        <span className="text-foreground">
+                          {winner.real_name ?? winner.profiles?.nickname ?? '—'}
                         </span>
                       )}
                     </td>

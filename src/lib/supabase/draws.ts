@@ -280,6 +280,27 @@ export async function saveAdminMemo(
   if (error) throw error
 }
 
+export async function updateManualWinner(
+  env: AdminEnv,
+  winnerId: string,
+  payload: {
+    real_name?: string
+    bank_name?: string
+    account_number?: string
+    account_holder?: string
+    winner_comment?: string
+    admin_memo?: string
+    manual_entry_count: number
+  },
+): Promise<void> {
+  const supabase = createServerClient(env)
+  const { error } = await supabase
+    .from('draw_winners')
+    .update(payload)
+    .eq('id', winnerId)
+  if (error) throw error
+}
+
 export async function updateManualEntryCount(
   env: AdminEnv,
   winnerId: string,

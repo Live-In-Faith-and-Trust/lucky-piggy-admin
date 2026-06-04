@@ -7,6 +7,7 @@ import {
   updatePaymentStatus,
   saveAdminMemo,
   addManualWinner,
+  updateManualWinner,
   deleteManualWinner,
   getEntryCount,
   closeDrawForTest,
@@ -157,6 +158,28 @@ export async function resetDrawAction(drawId: string, currentRoundNumber: number
   const env = await getAdminEnv()
   try {
     await resetDrawForTest(env, drawId, currentRoundNumber)
+    revalidatePath('/draws')
+    return {}
+  } catch (e) {
+    return { error: extractError(e) }
+  }
+}
+
+export async function updateManualWinnerAction(
+  winnerId: string,
+  payload: {
+    real_name?: string
+    bank_name?: string
+    account_number?: string
+    account_holder?: string
+    winner_comment?: string
+    admin_memo?: string
+    manual_entry_count: number
+  },
+): Promise<{ error?: string }> {
+  const env = await getAdminEnv()
+  try {
+    await updateManualWinner(env, winnerId, payload)
     revalidatePath('/draws')
     return {}
   } catch (e) {
