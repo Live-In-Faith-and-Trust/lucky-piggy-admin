@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState, useTransition, useEffect } from 'react'
 import { FlaskConical, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
 import {
@@ -36,7 +35,6 @@ const ENV_BADGE = ENV === 'production'
 const EMPTY_NUMBERS = ['', '', '', '', '', ''] as const
 
 export default function TestControlPanel({ drawId, roundNumber, status }: Props) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   const [collapsed, setCollapsed] = useState(false)
@@ -59,7 +57,9 @@ export default function TestControlPanel({ drawId, roundNumber, status }: Props)
   const step1Active = status === 'active'
   const step2Active = status === 'closed'
   const step3Active = status === 'drawn'
-  const resetActive = status !== 'completed'
+  // 프로덕션이 아니면 completed에서도 초기화 가능
+  const isProduction = ENV === 'production'
+  const resetActive = isProduction ? status !== 'completed' : true
 
   // ── 공통 액션 래퍼 (actions는 throw 대신 { error? } 반환)
   function run(fn: () => Promise<{ error?: string }>) {
@@ -68,8 +68,6 @@ export default function TestControlPanel({ drawId, roundNumber, status }: Props)
       const result = await fn()
       if (result?.error) {
         setError(result.error)
-      } else {
-        router.refresh()
       }
     })
   }
@@ -106,8 +104,8 @@ export default function TestControlPanel({ drawId, roundNumber, status }: Props)
   // ── 초기화
   function handleReset() {
     if (!resetActive) return
-    if (!confirm(`⚠️ ${roundNumber}회차 데이터를 초기화하시겠습니까?\n당첨자 삭제 + 응모 상태 롤백됩니다.`)) return
-    run(() => resetDrawAction(drawId))
+    if (!confirm(`⚠️ ${roundNumber}회차 데이터를 초기화하시겠습니까?\n당첨자 삭제 + 응모 데이터 삭제 + 다음 회차 삭제됩니다.\n앱에서 재응모가 필요합니다.`)) return
+    run(() => resetDrawAction(drawId, roundNumber))
   }
 
   // ── 버튼 카드 스타일 헬퍼
@@ -216,7 +214,7 @@ export default function TestControlPanel({ drawId, roundNumber, status }: Props)
                 [초기화]
               </p>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                draw_winners 삭제 + draw_entries 롤백 + status=active 복원
+                draw_winners 삭제 + draw_entries 롤백 + status=active 복원 (비프로덕션: completed에서도 가능, 다음 회차 삭제)
               </p>
             </button>
           </div>

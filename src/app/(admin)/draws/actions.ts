@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getAdminEnv } from '@/lib/supabase/server'
 import {
   toggleAccountVerified,
@@ -105,14 +105,20 @@ export async function getEntryCountAction(drawId: string): Promise<{ count?: num
   }
 }
 
+function extractError(e: unknown): string {
+  if (e instanceof Error) return e.message
+  if (e && typeof e === 'object' && 'message' in e) return String((e as { message: unknown }).message)
+  return '알 수 없는 오류가 발생했습니다'
+}
+
 export async function closeDrawAction(drawId: string): Promise<{ error?: string }> {
   const env = await getAdminEnv()
   try {
     await closeDrawForTest(env, drawId)
-    revalidateTag('draws-list', {})
+    revalidatePath('/draws')
     return {}
   } catch (e) {
-    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+    return { error: extractError(e) }
   }
 }
 
@@ -124,11 +130,10 @@ export async function judgeWinnersAction(
   const env = await getAdminEnv()
   try {
     await judgeWinnersForTest(env, drawId, winningNumbers, bonusNumber)
-    revalidateTag('draws-list', {})
-    revalidateTag('draw-winners', {})
+    revalidatePath('/draws')
     return {}
   } catch (e) {
-    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+    return { error: extractError(e) }
   }
 }
 
@@ -139,21 +144,20 @@ export async function publishDrawAction(
   const env = await getAdminEnv()
   try {
     await publishDrawForTest(env, drawId, currentRoundNumber)
-    revalidateTag('draws-list', {})
+    revalidatePath('/draws')
     return {}
   } catch (e) {
-    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+    return { error: extractError(e) }
   }
 }
 
-export async function resetDrawAction(drawId: string): Promise<{ error?: string }> {
+export async function resetDrawAction(drawId: string, currentRoundNumber: number): Promise<{ error?: string }> {
   const env = await getAdminEnv()
   try {
-    await resetDrawForTest(env, drawId)
-    revalidateTag('draws-list', {})
-    revalidateTag('draw-winners', {})
+    await resetDrawForTest(env, drawId, currentRoundNumber)
+    revalidatePath('/draws')
     return {}
   } catch (e) {
-    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+    return { error: extractError(e) }
   }
 }

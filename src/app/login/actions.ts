@@ -40,7 +40,7 @@ export async function logout(): Promise<void> {
   redirect('/login')
 }
 
-export async function setAdminEnv(env: 'staging' | 'production'): Promise<void> {
+export async function setAdminEnv(env: 'production' | 'staging' | 'local'): Promise<void> {
   const cookieStore = await cookies()
   cookieStore.set('admin_env', env, {
     httpOnly: true,

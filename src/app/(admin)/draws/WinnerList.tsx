@@ -47,13 +47,6 @@ function downloadWinnersCSV(winners: DrawWinner[], rankAmounts: Record<number, n
   URL.revokeObjectURL(url)
 }
 
-function maskName(winner: DrawWinner): string {
-  const name = winner.real_name ?? winner.profiles?.nickname ?? null
-  if (!name) return '—'
-  if (name.length <= 1) return name
-  return name[0] + '*'.repeat(Math.min(name.length - 1, 2))
-}
-
 const RANK_BADGE: Record<number, string> = {
   1: 'bg-[#FFDD13] text-[#7A5C00]',
   2: 'bg-slate-100 text-slate-600 border border-slate-200',
@@ -151,9 +144,13 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
               <tr className="border-b border-border">
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">등수</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">이름</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">당첨소감</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">초대코드</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">1인당 상금</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">계좌제출</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">은행</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">계좌번호</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">예금주</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">계좌확인</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">지급상태</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">메모</th>
@@ -173,12 +170,15 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
                       </span>
                     </td>
                     <td className="px-3 py-2.5 text-foreground font-medium tracking-tight">
-                      {maskName(winner)}
+                      {winner.real_name ?? winner.profiles?.nickname ?? '—'}
                       {winner.source === 'manual' && (
                         <span className="ml-1.5 text-[10px] font-medium text-muted-foreground bg-muted px-1 py-0.5 rounded">
                           수동
                         </span>
                       )}
+                    </td>
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground max-w-[160px] truncate" title={winner.winner_comment ?? undefined}>
+                      {winner.winner_comment ?? '—'}
                     </td>
                     <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground tracking-tight">
                       {winner.source === 'auto'
@@ -196,6 +196,15 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
                       ) : (
                         <span className="text-muted-foreground text-xs">미제출</span>
                       )}
+                    </td>
+                    <td className="px-3 py-2.5 text-sm text-foreground">
+                      {winner.bank_name ?? '—'}
+                    </td>
+                    <td className="px-3 py-2.5 font-mono text-xs text-foreground">
+                      {winner.account_number ?? '—'}
+                    </td>
+                    <td className="px-3 py-2.5 text-sm text-foreground">
+                      {winner.account_holder ?? '—'}
                     </td>
                     <td className="px-3 py-2.5">
                       <AccountVerifyToggle winnerId={winner.id} verified={winner.account_verified} />

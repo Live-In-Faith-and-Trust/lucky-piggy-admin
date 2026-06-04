@@ -5,57 +5,61 @@ import DrawSection from './DrawSection'
 
 export const dynamic = 'force-dynamic'
 
-function getTodayStartISO(): string {
+function getTodayUTCMidnight(): Date {
   const d = new Date()
   d.setUTCHours(0, 0, 0, 0)
-  return d.toISOString()
+  return d
 }
 
-function buildDailyStats(rows: { created_at: string }[], days: number): DayData[] {
-  const counts: Record<string, number> = {}
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-    const key = d.toISOString().slice(0, 10)
-    counts[key] = 0
-  }
-  for (const row of rows) {
-    const key = row.created_at.slice(0, 10)
-    if (key in counts) counts[key]++
-  }
-  return Object.entries(counts).map(([date, count]) => ({
-    date: `${parseInt(date.slice(5, 7))}/${parseInt(date.slice(8, 10))}`,
-    count,
+async function getDailySignupCounts(
+  supabase: Awaited<ReturnType<typeof getSupabaseClient>>,
+  days: number,
+): Promise<DayData[]> {
+  const todayUTC = getTodayUTCMidnight()
+
+  const dayStarts = Array.from({ length: days }, (_, i) => {
+    const d = new Date(todayUTC)
+    d.setUTCDate(todayUTC.getUTCDate() - (days - 1 - i))
+    return d
+  })
+
+  const counts = await Promise.all(
+    dayStarts.map((start) => {
+      const end = new Date(start)
+      end.setUTCDate(start.getUTCDate() + 1)
+      return supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', start.toISOString())
+        .lt('created_at', end.toISOString())
+        .then(({ count }) => count ?? 0)
+    }),
+  )
+
+  return dayStarts.map((d, i) => ({
+    date: `${d.getUTCMonth() + 1}/${d.getUTCDate()}`,
+    count: counts[i],
   }))
 }
 
 async function getDashboardData() {
   try {
     const supabase = await getSupabaseClient()
+    const todayStart = getTodayUTCMidnight().toISOString()
 
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-    const [totalResult, todayResult, signupsResult] = await Promise.all([
+    const [totalResult, todayResult, monthlyData] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .gte('created_at', getTodayStartISO()),
-      supabase
-        .from('profiles')
-        .select('created_at')
-        .gte('created_at', thirtyDaysAgo.toISOString())
-        .order('created_at', { ascending: true }),
+        .gte('created_at', todayStart),
+      getDailySignupCounts(supabase, 30),
     ])
-
-    const monthlyData = buildDailyStats(signupsResult.data ?? [], 30)
-    const weeklyData = monthlyData.slice(-7)
 
     return {
       totalUsers: totalResult.count ?? null,
       todaySignups: todayResult.count ?? null,
-      weeklyData,
+      weeklyData: monthlyData.slice(-7),
       monthlyData,
     }
   } catch {
