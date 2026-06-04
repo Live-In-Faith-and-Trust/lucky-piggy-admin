@@ -105,6 +105,12 @@ export async function getEntryCountAction(drawId: string): Promise<{ count?: num
   }
 }
 
+function extractError(e: unknown): string {
+  if (e instanceof Error) return e.message
+  if (e && typeof e === 'object' && 'message' in e) return String((e as { message: unknown }).message)
+  return '알 수 없는 오류가 발생했습니다'
+}
+
 export async function closeDrawAction(drawId: string): Promise<{ error?: string }> {
   const env = await getAdminEnv()
   try {
@@ -112,7 +118,7 @@ export async function closeDrawAction(drawId: string): Promise<{ error?: string 
     revalidatePath('/draws')
     return {}
   } catch (e) {
-    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+    return { error: extractError(e) }
   }
 }
 
@@ -127,7 +133,7 @@ export async function judgeWinnersAction(
     revalidatePath('/draws')
     return {}
   } catch (e) {
-    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+    return { error: extractError(e) }
   }
 }
 
@@ -141,17 +147,17 @@ export async function publishDrawAction(
     revalidatePath('/draws')
     return {}
   } catch (e) {
-    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+    return { error: extractError(e) }
   }
 }
 
-export async function resetDrawAction(drawId: string): Promise<{ error?: string }> {
+export async function resetDrawAction(drawId: string, currentRoundNumber: number): Promise<{ error?: string }> {
   const env = await getAdminEnv()
   try {
-    await resetDrawForTest(env, drawId)
+    await resetDrawForTest(env, drawId, currentRoundNumber)
     revalidatePath('/draws')
     return {}
   } catch (e) {
-    return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
+    return { error: extractError(e) }
   }
 }
