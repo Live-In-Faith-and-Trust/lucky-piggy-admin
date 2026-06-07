@@ -3,12 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { LayoutDashboard, Trophy, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Trophy, ToggleLeft, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const menus: { label: string; href: string; icon: LucideIcon }[] = [
   { label: '대시보드', href: '/dashboard', icon: LayoutDashboard },
   { label: '당첨자 관리', href: '/draws', icon: Trophy },
+  { label: 'Feature Flags', href: '/feature-flags', icon: ToggleLeft },
 ]
 
 export default function AdminSidebar() {
