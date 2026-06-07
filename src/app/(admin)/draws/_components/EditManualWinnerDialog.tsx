@@ -2,41 +2,44 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { ChevronDown } from 'lucide-react'
-import { addManualWinnerAction } from '@/app/(admin)/draws/actions'
+import { updateManualWinnerAction } from '@/app/(admin)/draws/actions'
+import { type DrawWinner } from '@/lib/supabase/draws'
 import { BANKS } from '@/lib/banks'
 
 interface Props {
-  drawId: string
+  winner: DrawWinner
 }
 
-export default function AddWinnerDialog({ drawId }: Props) {
+export default function EditManualWinnerDialog({ winner }: Props) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const [userId, setUserId] = useState('')
-  const [prizeRank, setPrizeRank] = useState<'1' | '2' | '3'>('1')
-  const [realName, setRealName] = useState('')
-  const [bankCode, setBankCode] = useState('')
-  const [accountNumber, setAccountNumber] = useState('')
-  const [accountHolder, setAccountHolder] = useState('')
-  const [winnerComment, setWinnerComment] = useState('')
-  const [adminMemo, setAdminMemo] = useState('')
-  const [manualEntryCount, setManualEntryCount] = useState('')
+  const initBankCode = BANKS.find((b) => b.name === winner.bank_name)?.code ?? ''
+
+  const [realName, setRealName] = useState(winner.real_name ?? '')
+  const [bankCode, setBankCode] = useState(initBankCode)
+  const [accountNumber, setAccountNumber] = useState(winner.account_number ?? '')
+  const [accountHolder, setAccountHolder] = useState(winner.account_holder ?? '')
+  const [winnerComment, setWinnerComment] = useState(winner.winner_comment ?? '')
+  const [adminMemo, setAdminMemo] = useState(winner.admin_memo ?? '')
+  const [manualEntryCount, setManualEntryCount] = useState(winner.manual_entry_count?.toString() ?? '')
+
+  // winner prop 변경 시 상태 동기화 (페이지 revalidate 후)
+  useEffect(() => {
+    setRealName(winner.real_name ?? '')
+    setBankCode(BANKS.find((b) => b.name === winner.bank_name)?.code ?? '')
+    setAccountNumber(winner.account_number ?? '')
+    setAccountHolder(winner.account_holder ?? '')
+    setWinnerComment(winner.winner_comment ?? '')
+    setAdminMemo(winner.admin_memo ?? '')
+    setManualEntryCount(winner.manual_entry_count?.toString() ?? '')
+  }, [winner])
 
   const handleClose = () => {
     if (isPending) return
     setOpen(false)
     setError(null)
-    setUserId('')
-    setPrizeRank('1')
-    setRealName('')
-    setBankCode('')
-    setAccountNumber('')
-    setAccountHolder('')
-    setWinnerComment('')
-    setAdminMemo('')
-    setManualEntryCount('')
   }
 
   useEffect(() => {
@@ -59,10 +62,7 @@ export default function AddWinnerDialog({ drawId }: Props) {
     const selectedBank = BANKS.find((b) => b.code === bankCode)
 
     startTransition(async () => {
-      const result = await addManualWinnerAction({
-        draw_id: drawId,
-        user_id: userId || undefined,
-        prize_rank: Number(prizeRank),
+      const result = await updateManualWinnerAction(winner.id, {
         real_name: realName || undefined,
         bank_name: selectedBank?.name || undefined,
         account_number: accountNumber || undefined,
@@ -85,10 +85,11 @@ export default function AddWinnerDialog({ drawId }: Props) {
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+        className="text-sm font-medium text-foreground hover:text-primary hover:underline underline-offset-2 transition-colors text-left"
       >
-        + 수동 당첨자 추가
+        {winner.real_name ?? winner.manual_referral_code ?? '—'}
       </button>
 
       {open && (
@@ -97,47 +98,21 @@ export default function AddWinnerDialog({ drawId }: Props) {
           onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}
         >
           <div className="bg-card rounded-xl p-6 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-sm font-semibold text-foreground tracking-tight">수동 당첨자 추가</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-foreground tracking-tight">수동 당첨자 수정</h2>
+              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                {winner.prize_rank}등
+              </span>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* 유저 ID */}
-              <div className="space-y-1">
-                <label htmlFor="aw-user-id" className={labelClass}>
-                  유저 ID <span className="text-muted-foreground/60">(선택 — 앱 미가입자는 비워두세요)</span>
-                </label>
-                <input
-                  id="aw-user-id"
-                  type="text"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  className={inputClass}
-                />
-              </div>
-
-              {/* 등수 */}
-              <div className="space-y-1">
-                <label htmlFor="aw-prize-rank" className={labelClass}>등수</label>
-                <select
-                  id="aw-prize-rank"
-                  value={prizeRank}
-                  onChange={(e) => setPrizeRank(e.target.value as '1' | '2' | '3')}
-                  required
-                  className={inputClass}
-                >
-                  <option value="1">1등</option>
-                  <option value="2">2등</option>
-                  <option value="3">3등</option>
-                </select>
-              </div>
-
               {/* 응모 횟수 */}
               <div className="space-y-1">
-                <label htmlFor="aw-entry-count" className={labelClass}>
-                  응모 횟수 <span className="text-muted-foreground/60">(필수)</span>
+                <label htmlFor="ew-entry-count" className={labelClass}>
+                  응모 횟수 <span className="text-red-500">*</span>
                 </label>
                 <input
-                  id="aw-entry-count"
+                  id="ew-entry-count"
                   type="number"
                   min={1}
                   value={manualEntryCount}
@@ -150,11 +125,11 @@ export default function AddWinnerDialog({ drawId }: Props) {
 
               {/* 실명 */}
               <div className="space-y-1">
-                <label htmlFor="aw-real-name" className={labelClass}>
+                <label htmlFor="ew-real-name" className={labelClass}>
                   실명 <span className="text-muted-foreground/60">(선택)</span>
                 </label>
                 <input
-                  id="aw-real-name"
+                  id="ew-real-name"
                   type="text"
                   value={realName}
                   onChange={(e) => setRealName(e.target.value)}
@@ -163,16 +138,15 @@ export default function AddWinnerDialog({ drawId }: Props) {
                 />
               </div>
 
-              {/* 구분선 */}
+              {/* 계좌 정보 */}
               <div className="border-t border-border pt-3 space-y-3">
                 <p className="text-[11px] font-semibold text-muted-foreground tracking-widest uppercase">계좌 정보 (선택)</p>
 
-                {/* 은행 선택 */}
                 <div className="space-y-1">
-                  <label htmlFor="aw-bank" className={labelClass}>은행</label>
+                  <label htmlFor="ew-bank" className={labelClass}>은행</label>
                   <div className="relative">
                     <select
-                      id="aw-bank"
+                      id="ew-bank"
                       value={bankCode}
                       onChange={(e) => setBankCode(e.target.value)}
                       className={`${inputClass} appearance-none pr-8`}
@@ -188,11 +162,10 @@ export default function AddWinnerDialog({ drawId }: Props) {
                   </div>
                 </div>
 
-                {/* 계좌번호 */}
                 <div className="space-y-1">
-                  <label htmlFor="aw-account-number" className={labelClass}>계좌번호</label>
+                  <label htmlFor="ew-account-number" className={labelClass}>계좌번호</label>
                   <input
-                    id="aw-account-number"
+                    id="ew-account-number"
                     type="text"
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value.replace(/[^0-9-]/g, ''))}
@@ -201,11 +174,10 @@ export default function AddWinnerDialog({ drawId }: Props) {
                   />
                 </div>
 
-                {/* 예금주 */}
                 <div className="space-y-1">
-                  <label htmlFor="aw-account-holder" className={labelClass}>예금주</label>
+                  <label htmlFor="ew-account-holder" className={labelClass}>예금주</label>
                   <input
-                    id="aw-account-holder"
+                    id="ew-account-holder"
                     type="text"
                     value={accountHolder}
                     onChange={(e) => setAccountHolder(e.target.value)}
@@ -217,11 +189,11 @@ export default function AddWinnerDialog({ drawId }: Props) {
 
               {/* 당첨 소감 */}
               <div className="space-y-1">
-                <label htmlFor="aw-winner-comment" className={labelClass}>
+                <label htmlFor="ew-winner-comment" className={labelClass}>
                   당첨 소감 <span className="text-muted-foreground/60">(선택 — 앱 당첨자 화면에 표시)</span>
                 </label>
                 <textarea
-                  id="aw-winner-comment"
+                  id="ew-winner-comment"
                   value={winnerComment}
                   onChange={(e) => setWinnerComment(e.target.value)}
                   placeholder="당첨 소감을 입력하세요..."
@@ -232,15 +204,15 @@ export default function AddWinnerDialog({ drawId }: Props) {
 
               {/* 어드민 메모 */}
               <div className="space-y-1">
-                <label htmlFor="aw-admin-memo" className={labelClass}>
+                <label htmlFor="ew-admin-memo" className={labelClass}>
                   어드민 메모 <span className="text-muted-foreground/60">(선택)</span>
                 </label>
                 <textarea
-                  id="aw-admin-memo"
+                  id="ew-admin-memo"
                   value={adminMemo}
                   onChange={(e) => setAdminMemo(e.target.value)}
                   placeholder="메모를 입력하세요..."
-                  rows={3}
+                  rows={2}
                   className={`${inputClass} resize-none`}
                 />
               </div>
@@ -261,7 +233,7 @@ export default function AddWinnerDialog({ drawId }: Props) {
                   disabled={isPending}
                   className="text-sm px-4 py-2 rounded-md bg-primary text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-50 tracking-tight"
                 >
-                  {isPending ? '추가 중...' : '추가하기'}
+                  {isPending ? '저장 중...' : '저장하기'}
                 </button>
               </div>
             </form>

@@ -7,12 +7,14 @@ import {
   updatePaymentStatus,
   saveAdminMemo,
   addManualWinner,
+  updateManualWinner,
   deleteManualWinner,
   getEntryCount,
   closeDrawForTest,
   judgeWinnersForTest,
   publishDrawForTest,
   resetDrawForTest,
+  updateManualEntryCount,
   type PaymentStatus,
 } from '@/lib/supabase/draws'
 
@@ -73,6 +75,7 @@ export async function addManualWinnerAction(payload: {
   account_holder?: string
   winner_comment?: string
   admin_memo?: string
+  manual_entry_count: number
 }): Promise<{ error?: string }> {
   const env = await getAdminEnv()
   try {
@@ -155,6 +158,42 @@ export async function resetDrawAction(drawId: string, currentRoundNumber: number
   const env = await getAdminEnv()
   try {
     await resetDrawForTest(env, drawId, currentRoundNumber)
+    revalidatePath('/draws')
+    return {}
+  } catch (e) {
+    return { error: extractError(e) }
+  }
+}
+
+export async function updateManualWinnerAction(
+  winnerId: string,
+  payload: {
+    real_name?: string
+    bank_name?: string
+    account_number?: string
+    account_holder?: string
+    winner_comment?: string
+    admin_memo?: string
+    manual_entry_count: number
+  },
+): Promise<{ error?: string }> {
+  const env = await getAdminEnv()
+  try {
+    await updateManualWinner(env, winnerId, payload)
+    revalidatePath('/draws')
+    return {}
+  } catch (e) {
+    return { error: extractError(e) }
+  }
+}
+
+export async function updateManualEntryCountAction(
+  winnerId: string,
+  count: number,
+): Promise<{ error?: string }> {
+  const env = await getAdminEnv()
+  try {
+    await updateManualEntryCount(env, winnerId, count)
     revalidatePath('/draws')
     return {}
   } catch (e) {
