@@ -1,11 +1,9 @@
 export const dynamic = 'force-dynamic'
 
 import { AlertTriangle } from 'lucide-react'
-import { getSupabaseClient } from '@/lib/supabase/server'
+import { getSupabaseClient, getAdminEnv } from '@/lib/supabase/server'
 import { type FeatureFlag } from '@/lib/supabase/feature-flags'
 import FeatureFlagsClient from './FeatureFlagsClient'
-
-const ENV = process.env.NEXT_PUBLIC_APP_ENV ?? 'development'
 
 const ENV_META: Record<string, { label: string; badgeClass: string; warn: boolean }> = {
   production: {
@@ -18,11 +16,11 @@ const ENV_META: Record<string, { label: string; badgeClass: string; warn: boolea
     badgeClass: 'bg-orange-100 text-orange-700 border border-orange-300',
     warn: false,
   },
-}
-const envMeta = ENV_META[ENV] ?? {
-  label: 'LOCAL / DEV',
-  badgeClass: 'bg-gray-100 text-gray-600 border border-gray-300',
-  warn: false,
+  local: {
+    label: 'LOCAL',
+    badgeClass: 'bg-violet-100 text-violet-700 border border-violet-300',
+    warn: false,
+  },
 }
 
 async function getFlags(): Promise<FeatureFlag[]> {
@@ -40,7 +38,8 @@ async function getFlags(): Promise<FeatureFlag[]> {
 }
 
 export default async function FeatureFlagsPage() {
-  const flags = await getFlags()
+  const [flags, adminEnv] = await Promise.all([getFlags(), getAdminEnv()])
+  const envMeta = ENV_META[adminEnv] ?? ENV_META.local
 
   return (
     <div className="space-y-5">
@@ -65,8 +64,9 @@ export default async function FeatureFlagsPage() {
       )}
 
       <FeatureFlagsClient
+        key={adminEnv}
         initialFlags={flags}
-        isProduction={ENV === 'production'}
+        isProduction={adminEnv === 'production'}
       />
     </div>
   )
