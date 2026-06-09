@@ -199,7 +199,7 @@ export default function TestControlPanel({ drawId, roundNumber, status }: Props)
             >
               <p className="text-xs font-semibold text-foreground">[Step 3] 당첨자 발표</p>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                일요일 10:00 publish-and-open 스케줄 역할. 다음 회차 활성화 (푸시 생략)
+                일요일 10:00 publish-and-open 스케줄 역할. 4/5등 응모권 즉시 지급 + 다음 회차 활성화 (푸시 생략)
               </p>
             </button>
 
