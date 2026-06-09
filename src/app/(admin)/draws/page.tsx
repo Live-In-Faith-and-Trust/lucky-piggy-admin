@@ -21,7 +21,8 @@ export default async function DrawsPage({
   const env = await getAdminEnv()
   const draws = await getDrawList(env)
 
-  const defaultDraw = draws.find((d) => d.status !== 'upcoming') ?? draws[0]
+  const startedDraws = draws.filter((d) => d.status !== 'upcoming')
+  const defaultDraw = startedDraws[0] ?? draws[0]
   const drawId = params.drawId ?? defaultDraw?.id ?? null
 
   if (!drawId) {
@@ -51,7 +52,7 @@ export default async function DrawsPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold text-foreground">당첨자 관리</h1>
-        <DrawSelector draws={draws} currentDrawId={currentDraw?.id ?? drawId} />
+        <DrawSelector draws={startedDraws} currentDrawId={currentDraw?.id ?? drawId} />
       </div>
       {currentDraw && (
         <TestControlPanel
