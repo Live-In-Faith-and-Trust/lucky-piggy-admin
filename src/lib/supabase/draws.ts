@@ -139,7 +139,6 @@ export const getWinners1to3 = unstable_cache(
       .from('draw_winners')
       .select('*, profiles(nickname, referral_code)')
       .eq('draw_id', drawId)
-      .in('prize_rank', [1, 2, 3])
       .order('prize_rank', { ascending: true })
       .order('created_at', { ascending: true })
     if (error) throw error

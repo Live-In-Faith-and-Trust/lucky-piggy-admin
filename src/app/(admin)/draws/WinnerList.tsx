@@ -53,6 +53,8 @@ const RANK_BADGE: Record<number, string> = {
   1: 'bg-[#FFDD13] text-[#7A5C00]',
   2: 'bg-slate-100 text-slate-600 border border-slate-200',
   3: 'bg-orange-100 text-orange-700 border border-orange-200',
+  4: 'bg-blue-50 text-blue-700 border border-blue-200',
+  5: 'bg-green-50 text-green-700 border border-green-200',
 }
 
 const TABS = [
@@ -60,9 +62,11 @@ const TABS = [
   { key: 1, label: '1등' },
   { key: 2, label: '2등' },
   { key: 3, label: '3등' },
+  { key: 4, label: '4등' },
+  { key: 5, label: '5등' },
 ] as const
 
-type TabKey = 0 | 1 | 2 | 3
+type TabKey = 0 | 1 | 2 | 3 | 4 | 5
 
 interface Props {
   winners: DrawWinner[]
@@ -83,7 +87,7 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
   }, [winners])
 
   const emptyMessage =
-    activeTab === 0 ? '이 회차의 1~3등 당첨자가 없습니다' : `이 회차의 ${activeTab}등 당첨자가 없습니다`
+    activeTab === 0 ? '이 회차의 당첨자가 없습니다' : `이 회차의 ${activeTab}등 당첨자가 없습니다`
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">

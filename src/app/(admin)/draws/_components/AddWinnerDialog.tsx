@@ -15,7 +15,7 @@ export default function AddWinnerDialog({ drawId }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   const [userId, setUserId] = useState('')
-  const [prizeRank, setPrizeRank] = useState<'1' | '2' | '3'>('1')
+  const [prizeRank, setPrizeRank] = useState<'1' | '2' | '3' | '4' | '5'>('1')
   const [realName, setRealName] = useState('')
   const [bankCode, setBankCode] = useState('')
   const [accountNumber, setAccountNumber] = useState('')
@@ -121,13 +121,15 @@ export default function AddWinnerDialog({ drawId }: Props) {
                 <select
                   id="aw-prize-rank"
                   value={prizeRank}
-                  onChange={(e) => setPrizeRank(e.target.value as '1' | '2' | '3')}
+                  onChange={(e) => setPrizeRank(e.target.value as '1' | '2' | '3' | '4' | '5')}
                   required
                   className={inputClass}
                 >
                   <option value="1">1등</option>
                   <option value="2">2등</option>
                   <option value="3">3등</option>
+                  <option value="4">4등</option>
+                  <option value="5">5등</option>
                 </select>
               </div>
 
