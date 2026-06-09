@@ -76,6 +76,9 @@ export async function addManualWinnerAction(payload: {
   winner_comment?: string
   admin_memo?: string
   manual_entry_count: number
+  email?: string
+  phone?: string
+  resident_id?: string
 }): Promise<{ error?: string }> {
   const env = await getAdminEnv()
   try {
@@ -175,6 +178,9 @@ export async function updateManualWinnerAction(
     winner_comment?: string
     admin_memo?: string
     manual_entry_count: number
+    email?: string
+    phone?: string
+    resident_id?: string
   },
 ): Promise<{ error?: string }> {
   const env = await getAdminEnv()

@@ -24,6 +24,9 @@ export default function EditManualWinnerDialog({ winner }: Props) {
   const [winnerComment, setWinnerComment] = useState(winner.winner_comment ?? '')
   const [adminMemo, setAdminMemo] = useState(winner.admin_memo ?? '')
   const [manualEntryCount, setManualEntryCount] = useState(winner.manual_entry_count?.toString() ?? '')
+  const [email, setEmail] = useState(winner.email ?? '')
+  const [phone, setPhone] = useState(winner.phone ?? '')
+  const [residentId, setResidentId] = useState(winner.resident_id ?? '')
 
   // winner prop 변경 시 상태 동기화 (페이지 revalidate 후)
   useEffect(() => {
@@ -34,6 +37,9 @@ export default function EditManualWinnerDialog({ winner }: Props) {
     setWinnerComment(winner.winner_comment ?? '')
     setAdminMemo(winner.admin_memo ?? '')
     setManualEntryCount(winner.manual_entry_count?.toString() ?? '')
+    setEmail(winner.email ?? '')
+    setPhone(winner.phone ?? '')
+    setResidentId(winner.resident_id ?? '')
   }, [winner])
 
   const handleClose = () => {
@@ -70,6 +76,9 @@ export default function EditManualWinnerDialog({ winner }: Props) {
         winner_comment: winnerComment || undefined,
         admin_memo: adminMemo || undefined,
         manual_entry_count: entryCountNum,
+        email: email || undefined,
+        phone: phone || undefined,
+        resident_id: residentId || undefined,
       })
       if (result.error) {
         setError(result.error)
@@ -184,6 +193,51 @@ export default function EditManualWinnerDialog({ winner }: Props) {
                     placeholder="홍길동"
                     className={inputClass}
                   />
+                </div>
+              </div>
+
+              {/* 개인정보 */}
+              <div className="border-t border-border pt-3 space-y-3">
+                <p className="text-[11px] font-semibold text-muted-foreground tracking-widest uppercase">개인정보 (선택)</p>
+
+                {/* 이메일 */}
+                <div className="space-y-1">
+                  <label htmlFor="ew-email" className={labelClass}>이메일</label>
+                  <input
+                    id="ew-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="안내 사항을 전달받을 이메일"
+                    className={inputClass}
+                  />
+                </div>
+
+                {/* 전화번호 */}
+                <div className="space-y-1">
+                  <label htmlFor="ew-phone" className={labelClass}>전화번호</label>
+                  <input
+                    id="ew-phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="안내 사항을 전달받을 번호"
+                    className={inputClass}
+                  />
+                </div>
+
+                {/* 주민번호 */}
+                <div className="space-y-1">
+                  <label htmlFor="ew-resident-id" className={labelClass}>주민번호</label>
+                  <input
+                    id="ew-resident-id"
+                    type="text"
+                    value={residentId}
+                    onChange={(e) => setResidentId(e.target.value)}
+                    placeholder="당첨자 본인 주민등록번호"
+                    className={inputClass}
+                  />
+                  <p className="text-[11px] text-muted-foreground/70 tracking-tight">원천세 신고 처리를 위해 필요해요</p>
                 </div>
               </div>
 
