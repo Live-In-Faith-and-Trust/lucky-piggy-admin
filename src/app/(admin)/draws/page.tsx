@@ -54,7 +54,7 @@ export default async function DrawsPage({
         <h1 className="text-lg font-semibold text-foreground">당첨자 관리</h1>
         <DrawSelector draws={startedDraws} currentDrawId={currentDraw?.id ?? drawId} />
       </div>
-      {currentDraw && (
+      {currentDraw && env !== 'production' && (
         <TestControlPanel
           drawId={currentDraw.id}
           roundNumber={currentDraw.round_number}
