@@ -43,6 +43,9 @@ export interface DrawWinner {
   profiles?: { nickname: string | null; referral_code: string | null } | null
   manual_referral_code: string | null
   manual_entry_count: number | null
+  email: string | null
+  phone: string | null
+  resident_id: string | null
   _auto_entry_count?: number | null
 }
 
@@ -209,6 +212,9 @@ export async function addManualWinner(
     winner_comment?: string
     admin_memo?: string
     manual_entry_count: number
+    email?: string
+    phone?: string
+    resident_id?: string
   }
 ): Promise<void> {
   const supabase = createServerClient(env)
@@ -291,6 +297,9 @@ export async function updateManualWinner(
     winner_comment?: string
     admin_memo?: string
     manual_entry_count: number
+    email?: string
+    phone?: string
+    resident_id?: string
   },
 ): Promise<void> {
   const supabase = createServerClient(env)

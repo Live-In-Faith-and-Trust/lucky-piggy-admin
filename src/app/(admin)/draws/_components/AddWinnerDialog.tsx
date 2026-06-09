@@ -23,6 +23,9 @@ export default function AddWinnerDialog({ drawId }: Props) {
   const [winnerComment, setWinnerComment] = useState('')
   const [adminMemo, setAdminMemo] = useState('')
   const [manualEntryCount, setManualEntryCount] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [residentId, setResidentId] = useState('')
 
   const handleClose = () => {
     if (isPending) return
@@ -37,6 +40,9 @@ export default function AddWinnerDialog({ drawId }: Props) {
     setWinnerComment('')
     setAdminMemo('')
     setManualEntryCount('')
+    setEmail('')
+    setPhone('')
+    setResidentId('')
   }
 
   useEffect(() => {
@@ -70,6 +76,9 @@ export default function AddWinnerDialog({ drawId }: Props) {
         winner_comment: winnerComment || undefined,
         admin_memo: adminMemo || undefined,
         manual_entry_count: entryCountNum,
+        email: email || undefined,
+        phone: phone || undefined,
+        resident_id: residentId || undefined,
       })
       if (result.error) {
         setError(result.error)
@@ -214,6 +223,51 @@ export default function AddWinnerDialog({ drawId }: Props) {
                     placeholder="홍길동"
                     className={inputClass}
                   />
+                </div>
+              </div>
+
+              {/* 개인정보 */}
+              <div className="border-t border-border pt-3 space-y-3">
+                <p className="text-[11px] font-semibold text-muted-foreground tracking-widest uppercase">개인정보 (선택)</p>
+
+                {/* 이메일 */}
+                <div className="space-y-1">
+                  <label htmlFor="aw-email" className={labelClass}>이메일</label>
+                  <input
+                    id="aw-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="안내 사항을 전달받을 이메일"
+                    className={inputClass}
+                  />
+                </div>
+
+                {/* 전화번호 */}
+                <div className="space-y-1">
+                  <label htmlFor="aw-phone" className={labelClass}>전화번호</label>
+                  <input
+                    id="aw-phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="안내 사항을 전달받을 번호"
+                    className={inputClass}
+                  />
+                </div>
+
+                {/* 주민번호 */}
+                <div className="space-y-1">
+                  <label htmlFor="aw-resident-id" className={labelClass}>주민번호</label>
+                  <input
+                    id="aw-resident-id"
+                    type="text"
+                    value={residentId}
+                    onChange={(e) => setResidentId(e.target.value)}
+                    placeholder="당첨자 본인 주민등록번호"
+                    className={inputClass}
+                  />
+                  <p className="text-[11px] text-muted-foreground/70 tracking-tight">원천세 신고 처리를 위해 필요해요</p>
                 </div>
               </div>
 

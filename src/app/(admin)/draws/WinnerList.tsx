@@ -19,7 +19,7 @@ const PAYMENT_STATUS_LABELS: Record<string, string> = {
 }
 
 function downloadWinnersCSV(winners: DrawWinner[], rankAmounts: Record<number, number | null>, roundNumber: number) {
-  const headers = ['등수', '이름(실명)', '초대코드', '1인당 상금', '계좌제출', '계좌확인', '은행명', '계좌번호', '예금주', '지급상태', '메모']
+  const headers = ['등수', '이름(실명)', '초대코드', '1인당 상금', '계좌제출', '계좌확인', '은행명', '계좌번호', '예금주', '이메일', '전화번호', '주민번호', '지급상태', '메모']
   const rows = winners.map((w) => {
     const referralCode = w.source === 'auto' ? (w.profiles?.referral_code ?? '') : (w.manual_referral_code ?? '')
     const amount = rankAmounts[w.prize_rank]
@@ -33,6 +33,9 @@ function downloadWinnersCSV(winners: DrawWinner[], rankAmounts: Record<number, n
       w.bank_name ?? '',
       w.account_number ?? '',
       w.account_holder ?? '',
+      w.email ?? '',
+      w.phone ?? '',
+      w.resident_id ?? '',
       PAYMENT_STATUS_LABELS[w.payment_status] ?? w.payment_status,
       w.admin_memo ?? '',
     ]
@@ -155,6 +158,9 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">계좌번호</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">예금주</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">계좌확인</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">이메일</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">전화번호</th>
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">주민번호</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">지급상태</th>
                 <th className="text-left px-3 py-2.5 text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">메모</th>
                 <th className="px-3 py-2.5 w-8" />
@@ -226,6 +232,15 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
                     </td>
                     <td className="px-3 py-2.5">
                       <AccountVerifyToggle winnerId={winner.id} verified={winner.account_verified} />
+                    </td>
+                    <td className="px-3 py-2.5 text-sm text-foreground">
+                      {winner.email ?? '—'}
+                    </td>
+                    <td className="px-3 py-2.5 text-sm text-foreground">
+                      {winner.phone ?? '—'}
+                    </td>
+                    <td className="px-3 py-2.5 font-mono text-xs text-foreground">
+                      {winner.resident_id ?? '—'}
                     </td>
                     <td className="px-3 py-2.5">
                       <PaymentStatusButton winnerId={winner.id} status={winner.payment_status} />
