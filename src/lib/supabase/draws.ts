@@ -394,7 +394,11 @@ export async function publishDrawForTest(
     .eq('id', drawId)
   if (completeErr) throw completeErr
 
-  // 2. 다음 회차 활성화 (round_number = current + 1)
+  // 2. 4/5등 응모권 자동 지급 (award_ticket_prizes, best-effort)
+  const { error: awardErr } = await supabase.rpc('award_ticket_prizes', { p_draw_id: drawId })
+  if (awardErr) console.error('award_ticket_prizes 실패 (무시):', awardErr.message)
+
+  // 3. 다음 회차 활성화 (round_number = current + 1)
   const { data: nextDraw, error: nextErr } = await supabase
     .from('draws')
     .select('id')
