@@ -104,12 +104,8 @@ export default function FeatureFlagsClient({ initialFlags, isProduction }: Props
           <div className="divide-y divide-border">
             {flags.map((flag) => {
               const isDirty = dirty.has(flag.code)
-              const updatedAt = new Date(flag.updated_at).toLocaleString('ko-KR', {
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-              })
+              const d = new Date(flag.updated_at)
+              const updatedAt = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
               return (
                 <div
                   key={flag.code}
