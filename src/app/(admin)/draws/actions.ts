@@ -83,7 +83,7 @@ export async function addManualWinnerAction(payload: {
   const env = await getAdminEnv()
   try {
     await addManualWinner(env, payload)
-    revalidateTag('draw-winners', {})
+    revalidatePath('/draws')
     return {}
   } catch (e) {
     return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
@@ -94,7 +94,7 @@ export async function deleteManualWinnerAction(winnerId: string): Promise<{ erro
   const env = await getAdminEnv()
   try {
     await deleteManualWinner(env, winnerId)
-    revalidateTag('draw-winners', {})
+    revalidatePath('/draws')
     return {}
   } catch (e) {
     return { error: e instanceof Error ? e.message : '오류가 발생했습니다' }
