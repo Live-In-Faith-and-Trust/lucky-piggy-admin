@@ -233,7 +233,8 @@ export async function addManualWinner(
     .upsert(prizesToUpsert, { onConflict: 'draw_id,prize_rank', ignoreDuplicates: true })
   if (prizeError) throw prizeError
 
-  const manual_referral_code = await generateUniqueReferralCode(supabase)
+  // 실제 유저(user_id 있음)는 referral_code가 프로필에 있으므로 별도 코드 불필요
+  const manual_referral_code = payload.user_id ? null : await generateUniqueReferralCode(supabase)
 
   const { error } = await supabase.from('draw_winners').insert({
     ...payload,

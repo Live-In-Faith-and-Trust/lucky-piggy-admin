@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { ChevronDown } from 'lucide-react'
-import { addManualWinnerAction } from '@/app/(admin)/draws/actions'
+import { ChevronDown, Search, X, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { addManualWinnerAction, searchUserAction } from '@/app/(admin)/draws/actions'
 import { BANKS } from '@/lib/banks'
 
 interface Props {
@@ -12,9 +12,18 @@ interface Props {
 export default function AddWinnerDialog({ drawId }: Props) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [isSearching, startSearchTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const [userId, setUserId] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResult, setSearchResult] = useState<{
+    id: string
+    nickname: string | null
+    referral_code: string | null
+    alreadyWinner?: boolean
+  } | null>(null)
+  const [searchError, setSearchError] = useState<string | null>(null)
   const [prizeRank, setPrizeRank] = useState<'1' | '2' | '3' | '4' | '5'>('1')
   const [realName, setRealName] = useState('')
   const [bankCode, setBankCode] = useState('')
@@ -32,6 +41,9 @@ export default function AddWinnerDialog({ drawId }: Props) {
     setOpen(false)
     setError(null)
     setUserId('')
+    setSearchQuery('')
+    setSearchResult(null)
+    setSearchError(null)
     setPrizeRank('1')
     setRealName('')
     setBankCode('')
@@ -51,6 +63,21 @@ export default function AddWinnerDialog({ drawId }: Props) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open, isPending])
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) return
+    setSearchError(null)
+    setSearchResult(null)
+    startSearchTransition(async () => {
+      const res = await searchUserAction(searchQuery.trim(), drawId)
+      if (res.error) {
+        setSearchError(res.error)
+      } else if (res.user) {
+        setSearchResult({ ...res.user, alreadyWinner: res.alreadyWinner })
+        setUserId(res.user.id)
+      }
+    })
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -109,19 +136,66 @@ export default function AddWinnerDialog({ drawId }: Props) {
             <h2 className="text-sm font-semibold text-foreground tracking-tight">수동 당첨자 추가</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* 유저 ID */}
-              <div className="space-y-1">
-                <label htmlFor="aw-user-id" className={labelClass}>
-                  유저 ID <span className="text-muted-foreground/60">(선택 — 앱 미가입자는 비워두세요)</span>
+              {/* 앱 유저 연결 */}
+              <div className="space-y-2">
+                <label className={labelClass}>
+                  앱 유저 연결 <span className="text-muted-foreground/60">(선택)</span>
                 </label>
-                <input
-                  id="aw-user-id"
-                  type="text"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  className={inputClass}
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearch() } }}
+                    placeholder="초대코드 또는 UUID"
+                    disabled={isSearching}
+                    className={`${inputClass} flex-1`}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSearch}
+                    disabled={isSearching || !searchQuery.trim()}
+                    className="px-3 py-2 rounded-md bg-muted border border-border text-sm text-foreground hover:bg-accent disabled:opacity-40 transition-colors flex items-center gap-1"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    {isSearching ? '검색 중' : '검색'}
+                  </button>
+                </div>
+
+                {searchError && (
+                  <p className="text-xs text-red-500 tracking-tight">{searchError}</p>
+                )}
+
+                {searchResult && (
+                  <div className={`flex items-center justify-between rounded-lg px-3 py-2.5 border ${searchResult.alreadyWinner ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      {searchResult.alreadyWinner
+                        ? <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                        : <CheckCircle2 className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                      }
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground tracking-tight truncate">
+                          {searchResult.nickname ?? '(닉네임 없음)'} · {searchResult.referral_code}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground font-mono truncate">{searchResult.id}</p>
+                        {searchResult.alreadyWinner && (
+                          <p className="text-[10px] text-amber-600 tracking-tight">이미 이 회차에 당첨자로 등록됨</p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchResult(null)
+                        setSearchQuery('')
+                        setUserId('')
+                      }}
+                      className="ml-2 p-1 rounded hover:bg-black/10 text-muted-foreground flex-shrink-0"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* 등수 */}

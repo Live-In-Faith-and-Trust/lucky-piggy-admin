@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { getAdminEnv } from '@/lib/supabase/server'
+import { getAdminEnv, createServerClient } from '@/lib/supabase/server'
 import {
   toggleAccountVerified,
   updatePaymentStatus,
@@ -203,5 +203,53 @@ export async function updateManualEntryCountAction(
     return {}
   } catch (e) {
     return { error: extractError(e) }
+  }
+}
+
+export async function searchUserAction(
+  query: string,
+  drawId: string
+): Promise<{
+  user?: { id: string; nickname: string | null; referral_code: string | null }
+  alreadyWinner?: boolean
+  error?: string
+}> {
+  if (!query.trim()) return { error: '검색어를 입력하세요.' }
+  const env = await getAdminEnv()
+  const supabase = createServerClient(env)
+
+  // referral_code로 먼저 조회, 없으면 uuid로 조회
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(query.trim())
+
+  let profile: { id: string; nickname: string | null; referral_code: string | null } | null = null
+
+  if (isUUID) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, nickname, referral_code')
+      .eq('id', query.trim())
+      .single()
+    profile = data ?? null
+  } else {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, nickname, referral_code')
+      .eq('referral_code', query.trim().toUpperCase())
+      .single()
+    profile = data ?? null
+  }
+
+  if (!profile) return { error: '유저를 찾을 수 없습니다.' }
+
+  // 이미 이 회차에 당첨자로 있는지 확인
+  const { count } = await supabase
+    .from('draw_winners')
+    .select('*', { count: 'exact', head: true })
+    .eq('draw_id', drawId)
+    .eq('user_id', profile.id)
+
+  return {
+    user: profile,
+    alreadyWinner: (count ?? 0) > 0,
   }
 }
