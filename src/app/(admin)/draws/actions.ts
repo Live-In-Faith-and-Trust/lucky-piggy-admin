@@ -19,8 +19,7 @@ import {
 } from '@/lib/supabase/draws'
 
 export async function refreshWinners(_drawId: string): Promise<void> {
-  revalidateTag('draws-list', {})
-  revalidateTag('draw-winners', {})
+  revalidatePath('/draws')
 }
 
 export async function toggleAccountVerifiedAction(
