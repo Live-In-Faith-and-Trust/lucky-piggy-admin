@@ -1,8 +1,8 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import { ChevronDown, RotateCw } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { type Draw } from '@/lib/supabase/draws'
 import { refreshWinners } from '@/app/(admin)/draws/actions'
 
@@ -44,7 +44,6 @@ export default function DrawSelector({ draws, currentDrawId }: Props) {
         onClick={() =>
           startTransition(async () => {
             await refreshWinners(currentDrawId)
-            router.refresh()
           })
         }
         disabled={isPending}
