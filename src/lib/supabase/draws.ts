@@ -85,14 +85,21 @@ export const getDrawList = unstable_cache(
 export const getEntryStats = unstable_cache(
   async (env: AdminEnv, drawId: string): Promise<DrawEntryStats> => {
     const supabase = createServerClient(env)
-    const { data, error } = await supabase
-      .from('draw_entries')
-      .select('user_id')
-      .eq('draw_id', drawId)
-    if (error) throw error
-    const rows = data ?? []
-    const entrant_count = new Set(rows.map((r) => r.user_id)).size
-    const entry_count = rows.length
+    const [{ count, error: e1 }, { data, error: e2 }] = await Promise.all([
+      supabase
+        .from('draw_entries')
+        .select('*', { count: 'exact', head: true })
+        .eq('draw_id', drawId),
+      supabase
+        .from('draw_entries')
+        .select('user_id')
+        .eq('draw_id', drawId)
+        .limit(1_000_000),
+    ])
+    if (e1) throw e1
+    if (e2) throw e2
+    const entrant_count = new Set((data ?? []).map((r) => r.user_id)).size
+    const entry_count = count ?? 0
     return { entrant_count, entry_count }
   },
   ['draw-entry-stats'],
