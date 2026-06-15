@@ -2,6 +2,8 @@ import Image from 'next/image'
 import { getSupabaseClient } from '@/lib/supabase/server'
 import SignupChart, { type DayData } from './SignupChart'
 import DrawSection from './DrawSection'
+import DrawAnalyticsSection from './DrawAnalyticsSection'
+import AutoRefresh from './AutoRefresh'
 
 export const dynamic = 'force-dynamic'
 
@@ -104,6 +106,8 @@ export default async function DashboardPage() {
       <SignupChart weeklyData={weeklyData} monthlyData={monthlyData} />
 
       <DrawSection />
+      <DrawAnalyticsSection />
+      <AutoRefresh />
     </div>
   )
 }
