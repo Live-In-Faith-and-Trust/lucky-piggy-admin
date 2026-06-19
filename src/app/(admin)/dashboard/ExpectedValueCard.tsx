@@ -59,8 +59,9 @@ export default function ExpectedValueCard({ roundNumber, data }: Props) {
       ) : (
         <>
           {(() => {
-            const entryRate = data.heldTickets > 0
-              ? (data.enteredTickets / data.heldTickets) * 100
+            const totalTickets = data.heldTickets + data.enteredTickets
+            const entryRate = totalTickets > 0
+              ? (data.enteredTickets / totalTickets) * 100
               : 0
             return (
               <div className="grid grid-cols-2 gap-3">
