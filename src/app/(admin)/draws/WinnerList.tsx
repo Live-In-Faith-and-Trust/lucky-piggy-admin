@@ -174,7 +174,14 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
               {filtered.map((winner) => {
                 const amount = rankAmounts[winner.prize_rank]
                 return (
-                  <tr key={winner.id} className="hover:bg-muted/40 transition-colors">
+                  <tr
+                    key={winner.id}
+                    className={`transition-colors ${
+                      winner.source === 'manual'
+                        ? 'bg-amber-500/[0.07] hover:bg-amber-500/[0.12]'
+                        : 'hover:bg-muted/40'
+                    }`}
+                  >
                     <td className="px-3 py-2.5">
                       <span
                         className={`inline-flex items-center justify-center text-xs font-bold px-2 py-0.5 rounded-md ${RANK_BADGE[winner.prize_rank] ?? 'bg-muted text-muted-foreground'}`}
