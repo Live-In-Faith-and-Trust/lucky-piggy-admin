@@ -107,16 +107,17 @@ export const getWinnerSummary = unstable_cache(
   async (env: AdminEnv, drawId: string): Promise<WinnerRankSummary[]> => {
     const supabase = createServerClient(env)
 
-    const [{ data: winnerRows, error: wErr }, { data: prizeRows, error: pErr }] = await Promise.all([
-      supabase.from('draw_winners').select('prize_rank').eq('draw_id', drawId),
+    // winner 집계는 RPC 사용 — 직접 row 조회 시 PostgREST max_rows 제한으로 과소 계산됨
+    const [{ data: countRows, error: wErr }, { data: prizeRows, error: pErr }] = await Promise.all([
+      supabase.rpc('get_draw_winner_counts', { p_draw_id: drawId }),
       supabase.from('draw_prizes').select('prize_rank, amount').eq('draw_id', drawId),
     ])
     if (wErr) throw wErr
     if (pErr) throw pErr
 
     const countMap: Record<number, number> = {}
-    for (const w of winnerRows ?? []) {
-      countMap[w.prize_rank] = (countMap[w.prize_rank] ?? 0) + 1
+    for (const w of (countRows as { prize_rank: number; cnt: number }[] ?? [])) {
+      countMap[w.prize_rank] = w.cnt
     }
     const prizeMap: Record<number, number | null> = {}
     for (const p of prizeRows ?? []) {
