@@ -187,7 +187,7 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
                         <EditManualWinnerDialog winner={winner} />
                       ) : (
                         <span className="text-foreground">
-                          {winner.real_name ?? winner.profiles?.nickname ?? '—'}
+                          {winner.real_name ?? winner.profiles?.nickname ?? winner.profiles?.referral_code ?? winner.manual_referral_code ?? '—'}
                         </span>
                       )}
                     </td>
