@@ -140,8 +140,7 @@ export const getWinnerSummary = unstable_cache(
   { revalidate: 300, tags: ['draw-winners'] }
 )
 
-export const getWinners1to3 = unstable_cache(
-  async (env: AdminEnv, drawId: string): Promise<DrawWinner[]> => {
+export async function getWinners1to3(env: AdminEnv, drawId: string): Promise<DrawWinner[]> {
     const supabase = createServerClient(env)
     const { data, error } = await supabase
       .from('draw_winners')
@@ -182,10 +181,7 @@ export const getWinners1to3 = unstable_cache(
         ? (entryCountByUserId[w.user_id] ?? 0)
         : null,
     }))
-  },
-  ['draw-winners-1to3'],
-  { revalidate: 300, tags: ['draw-winners'] }
-)
+}
 
 // ── Write functions (no cache — called from Server Actions) ─────────────────
 
