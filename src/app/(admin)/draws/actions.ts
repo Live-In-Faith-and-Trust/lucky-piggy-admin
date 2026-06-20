@@ -83,6 +83,7 @@ export async function addManualWinnerAction(payload: {
   const env = await getAdminEnv()
   try {
     await addManualWinner(env, payload)
+    revalidateTag('draw-winners', {})
     revalidatePath('/draws')
     return {}
   } catch (e) {
@@ -266,6 +267,7 @@ export async function bulkAddManualWinnersAction(payload: {
     }
   }
 
+  revalidateTag('draw-winners', {})
   revalidatePath('/draws')
 
   if (added === 0) {
