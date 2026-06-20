@@ -254,3 +254,34 @@ export async function searchUserAction(
     alreadyWinner: (count ?? 0) > 0,
   }
 }
+
+export async function bulkAddManualWinnersAction(payload: {
+  draw_id: string
+  prize_rank: number
+  count: number
+  min_entry_count: number
+  max_entry_count: number
+}): Promise<{ added: number; error?: string }> {
+  const env = await getAdminEnv()
+  const { draw_id, prize_rank, count, min_entry_count, max_entry_count } = payload
+  let added = 0
+  let lastError: string | undefined
+
+  for (let i = 0; i < count; i++) {
+    const manual_entry_count =
+      Math.floor(Math.random() * (max_entry_count - min_entry_count + 1)) + min_entry_count
+    try {
+      await addManualWinner(env, { draw_id, prize_rank, manual_entry_count })
+      added++
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : '오류가 발생했습니다'
+    }
+  }
+
+  revalidatePath('/draws')
+
+  if (added === 0) {
+    return { added: 0, error: lastError ?? '모든 추가에 실패했습니다' }
+  }
+  return { added }
+}
