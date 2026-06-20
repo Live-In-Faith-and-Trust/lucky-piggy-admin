@@ -83,6 +83,7 @@ export async function addManualWinnerAction(payload: {
   const env = await getAdminEnv()
   try {
     await addManualWinner(env, payload)
+    revalidateTag('draw-winners', {})
     revalidatePath('/draws')
     return {}
   } catch (e) {
@@ -209,11 +210,8 @@ export async function updateManualEntryCountAction(
 
 export async function searchUserAction(
   query: string,
-  drawId: string
 ): Promise<{
   user?: { id: string; nickname: string | null; referral_code: string | null }
-  alreadyWinner?: boolean
-  alreadyWinnerRanks?: number[]
   error?: string
 }> {
   if (!query.trim()) return { error: '검색어를 입력하세요.' }
@@ -243,20 +241,7 @@ export async function searchUserAction(
 
   if (!profile) return { error: '유저를 찾을 수 없습니다.' }
 
-  // 이미 이 회차에 당첨자로 있는지 확인 — 등수 포함하여 반환
-  const { data: existingWinners } = await supabase
-    .from('draw_winners')
-    .select('prize_rank')
-    .eq('draw_id', drawId)
-    .eq('user_id', profile.id)
-
-  const alreadyWinnerRanks = (existingWinners ?? []).map((w: { prize_rank: number }) => w.prize_rank)
-
-  return {
-    user: profile,
-    alreadyWinner: alreadyWinnerRanks.length > 0,
-    alreadyWinnerRanks,
-  }
+  return { user: profile }
 }
 
 export async function bulkAddManualWinnersAction(payload: {
@@ -282,6 +267,7 @@ export async function bulkAddManualWinnersAction(payload: {
     }
   }
 
+  revalidateTag('draw-winners', {})
   revalidatePath('/draws')
 
   if (added === 0) {

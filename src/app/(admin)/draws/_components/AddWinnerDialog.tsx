@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { ChevronDown, Search, X, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { ChevronDown, Search, X, CheckCircle2 } from 'lucide-react'
 import { addManualWinnerAction, searchUserAction } from '@/app/(admin)/draws/actions'
 import { BANKS } from '@/lib/banks'
 
@@ -21,8 +21,6 @@ export default function AddWinnerDialog({ drawId }: Props) {
     id: string
     nickname: string | null
     referral_code: string | null
-    alreadyWinner?: boolean
-    alreadyWinnerRanks?: number[]
   } | null>(null)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [prizeRank, setPrizeRank] = useState<'1' | '2' | '3' | '4' | '5'>('1')
@@ -70,11 +68,11 @@ export default function AddWinnerDialog({ drawId }: Props) {
     setSearchError(null)
     setSearchResult(null)
     startSearchTransition(async () => {
-      const res = await searchUserAction(searchQuery.trim(), drawId)
+      const res = await searchUserAction(searchQuery.trim())
       if (res.error) {
         setSearchError(res.error)
       } else if (res.user) {
-        setSearchResult({ ...res.user, alreadyWinner: res.alreadyWinner, alreadyWinnerRanks: res.alreadyWinnerRanks })
+        setSearchResult(res.user)
         setUserId(res.user.id)
       }
     })
@@ -168,22 +166,14 @@ export default function AddWinnerDialog({ drawId }: Props) {
                 )}
 
                 {searchResult && (
-                  <div className={`flex items-center justify-between rounded-lg px-3 py-2.5 border ${searchResult.alreadyWinner ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
+                  <div className="flex items-center justify-between rounded-lg px-3 py-2.5 border bg-green-50 border-green-200">
                     <div className="flex items-center gap-2 min-w-0">
-                      {searchResult.alreadyWinner
-                        ? <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-                        : <CheckCircle2 className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
-                      }
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xs font-medium text-foreground tracking-tight truncate">
                           {searchResult.nickname ?? '(닉네임 없음)'} · {searchResult.referral_code}
                         </p>
                         <p className="text-[10px] text-muted-foreground font-mono truncate">{searchResult.id}</p>
-                        {searchResult.alreadyWinner && (
-                          <p className="text-[10px] text-amber-600 tracking-tight">
-                            이미 이 회차 {searchResult.alreadyWinnerRanks?.map((r) => `${r}등`).join(', ')}으로 등록됨
-                          </p>
-                        )}
                       </div>
                     </div>
                     <button
