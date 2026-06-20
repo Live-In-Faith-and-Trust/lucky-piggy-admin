@@ -8,6 +8,7 @@ import AccountVerifyToggle from './_components/AccountVerifyToggle'
 import PaymentStatusButton from './_components/PaymentStatusButton'
 import AdminMemoInput from './_components/AdminMemoInput'
 import AddWinnerDialog from './_components/AddWinnerDialog'
+import BulkAddWinnerDialog from './_components/BulkAddWinnerDialog'
 import DeleteWinnerButton from './_components/DeleteWinnerButton'
 import ManualEntryCountInput from './_components/ManualEntryCountInput'
 import EditManualWinnerDialog from './_components/EditManualWinnerDialog'
@@ -92,10 +93,13 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
     <div className="rounded-xl border border-border bg-card overflow-hidden">
       {/* Toolbar */}
       <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-3 flex-wrap">
-        <AddWinnerDialog drawId={drawId} />
+        <div className="flex items-center gap-2">
+          <AddWinnerDialog drawId={drawId} />
+          <BulkAddWinnerDialog drawId={drawId} />
+        </div>
         <button
-          onClick={() => downloadWinnersCSV(winners, rankAmounts, roundNumber)}
-          disabled={winners.length === 0}
+          onClick={() => downloadWinnersCSV(winners.filter((w) => w.source === 'auto'), rankAmounts, roundNumber)}
+          disabled={winners.filter((w) => w.source === 'auto').length === 0}
           className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Download className="w-3.5 h-3.5" />
