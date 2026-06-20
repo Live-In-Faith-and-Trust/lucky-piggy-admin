@@ -195,9 +195,7 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
                       {winner.winner_comment ?? '—'}
                     </td>
                     <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground tracking-tight">
-                      {winner.source === 'auto'
-                        ? (winner.profiles?.referral_code ?? '—')
-                        : (winner.manual_referral_code ?? '—')}
+                      {winner.profiles?.referral_code ?? winner.manual_referral_code ?? '—'}
                     </td>
                     <td className="px-3 py-2.5 text-foreground tabular-nums tracking-tight font-medium">
                       {amount !== null && amount !== undefined ? formatKRW(amount) : '—'}
