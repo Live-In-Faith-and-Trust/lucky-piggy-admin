@@ -56,7 +56,13 @@ export async function createNotice(
 export async function updateNotice(
   env: AdminEnv,
   id: string,
-  notice: { title: string; content: string; status: 'draft' | 'published' | 'archived'; priority: number }
+  notice: {
+    title: string
+    content: string
+    status: 'draft' | 'published' | 'archived'
+    priority: number
+    created_at?: string
+  }
 ): Promise<void> {
   const supabase = createServerClient(env)
   const { error } = await supabase

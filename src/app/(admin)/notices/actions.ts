@@ -23,11 +23,13 @@ export async function createNoticeAction(formData: FormData): Promise<{ error?: 
 export async function updateNoticeAction(id: string, formData: FormData): Promise<{ error?: string }> {
   const env = await getAdminEnv()
   try {
+    const createdAt = formData.get('created_at') as string | null
     await updateNotice(env, id, {
       title: formData.get('title') as string,
       content: formData.get('content') as string,
       status: formData.get('status') as 'draft' | 'published' | 'archived',
       priority: Number(formData.get('priority') ?? 0),
+      ...(createdAt ? { created_at: createdAt } : {}),
     })
     revalidatePath('/notices')
     revalidatePath(`/notices/${id}`)
