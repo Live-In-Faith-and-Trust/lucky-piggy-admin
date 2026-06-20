@@ -98,7 +98,7 @@ export default function EditManualWinnerDialog({ winner }: Props) {
         onClick={() => setOpen(true)}
         className="text-sm font-medium text-foreground hover:text-primary hover:underline underline-offset-2 transition-colors text-left"
       >
-        {winner.real_name ?? winner.profiles?.nickname ?? winner.profiles?.referral_code ?? winner.manual_referral_code ?? '—'}
+        {winner.real_name ?? winner.profiles?.referral_code ?? winner.manual_referral_code ?? '—'}
       </button>
 
       {open && (
