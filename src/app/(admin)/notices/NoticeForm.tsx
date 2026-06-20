@@ -11,6 +11,13 @@ interface Props {
   notice?: Notice
 }
 
+// ISO(UTC) → datetime-local 입력값("YYYY-MM-DDTHH:mm", 로컬/KST)
+function toDatetimeLocal(iso: string): string {
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 export default function NoticeForm({ mode, notice }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -20,6 +27,12 @@ export default function NoticeForm({ mode, notice }: Props) {
     e.preventDefault()
     setError(null)
     const formData = new FormData(e.currentTarget)
+
+    // datetime-local 입력값(로컬/KST)을 ISO(UTC)로 변환해 서버 타임존 영향 제거
+    const createdAtLocal = formData.get('created_at') as string
+    if (createdAtLocal) {
+      formData.set('created_at', new Date(createdAtLocal).toISOString())
+    }
 
     startTransition(async () => {
       let result: { error?: string }
@@ -105,6 +118,23 @@ export default function NoticeForm({ mode, notice }: Props) {
             <p className="text-[11px] text-muted-foreground tracking-tight">높을수록 앱에서 먼저 표시됩니다</p>
           </div>
         </div>
+
+        {/* 등록일시 (수정 모드만) */}
+        {mode === 'edit' && (
+          <div className="space-y-1.5">
+            <label htmlFor="created_at" className="text-sm font-medium text-foreground tracking-tight">
+              등록일시
+            </label>
+            <input
+              id="created_at"
+              name="created_at"
+              type="datetime-local"
+              defaultValue={notice ? toDatetimeLocal(notice.created_at) : ''}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
+            />
+            <p className="text-[11px] text-muted-foreground tracking-tight">앱에 표시되는 공지 날짜입니다</p>
+          </div>
+        )}
       </div>
 
       {error && (
