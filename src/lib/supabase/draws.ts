@@ -158,17 +158,21 @@ export const getWinners1to3 = unstable_cache(
       .filter((w) => w.source === 'auto' && w.user_id)
       .map((w) => w.user_id as string)
 
+    // 유저별 개별 COUNT 쿼리 — 일괄 fetch 시 PostgREST max_rows 제한으로 과소 계산됨
     let entryCountByUserId: Record<string, number> = {}
     if (autoUserIds.length > 0) {
-      const { data: entries } = await supabase
-        .from('draw_entries')
-        .select('user_id')
-        .eq('draw_id', drawId)
-        .in('user_id', autoUserIds)
-      for (const e of entries ?? []) {
-        if (e.user_id) {
-          entryCountByUserId[e.user_id] = (entryCountByUserId[e.user_id] ?? 0) + 1
-        }
+      const counts = await Promise.all(
+        autoUserIds.map((userId) =>
+          supabase
+            .from('draw_entries')
+            .select('*', { count: 'exact', head: true })
+            .eq('draw_id', drawId)
+            .eq('user_id', userId)
+            .then(({ count }) => ({ userId, count: count ?? 0 }))
+        )
+      )
+      for (const { userId, count } of counts) {
+        entryCountByUserId[userId] = count
       }
     }
 
