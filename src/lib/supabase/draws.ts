@@ -85,20 +85,17 @@ export const getDrawList = unstable_cache(
 export const getEntryStats = unstable_cache(
   async (env: AdminEnv, drawId: string): Promise<DrawEntryStats> => {
     const supabase = createServerClient(env)
-    const [{ count, error: e1 }, { data, error: e2 }] = await Promise.all([
+    // entrant_count은 RPC로 집계 — 직접 row 조회 시 PostgREST max_rows 제한으로 과소 계산됨
+    const [{ count, error: e1 }, { data: entrantData, error: e2 }] = await Promise.all([
       supabase
         .from('draw_entries')
         .select('*', { count: 'exact', head: true })
         .eq('draw_id', drawId),
-      supabase
-        .from('draw_entries')
-        .select('user_id')
-        .eq('draw_id', drawId)
-        .limit(1_000_000),
+      supabase.rpc('get_draw_entrant_count', { p_draw_id: drawId }),
     ])
     if (e1) throw e1
     if (e2) throw e2
-    const entrant_count = new Set((data ?? []).map((r) => r.user_id)).size
+    const entrant_count = (entrantData as number) ?? 0
     const entry_count = count ?? 0
     return { entrant_count, entry_count }
   },
