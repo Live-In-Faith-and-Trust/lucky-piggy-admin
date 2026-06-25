@@ -24,15 +24,16 @@ export interface DrawExpectedValueData {
 /** 직전 회차 등수별 당첨자/지급액 요약 */
 export interface DrawWinnerRankPayout {
   rank: number
-  autoCount: number       // 실제(자동) 당첨자 수 — 표시용
-  totalCount: number      // auto+manual — 1/n 분모
+  autoCount: number       // 실제(자동) 당첨자 수 — 우리가 실제 지급하는 대상
+  totalCount: number      // auto+manual — 1인당 금액 분모(수동 포함 희석)
   prizeAmount: number     // 해당 등수 총 상금 풀
   perWinnerPayout: number // amount ÷ totalCount (수동 포함 1/n)
+  rankPayout: number      // 실제 지급액 = perWinnerPayout × autoCount (수동 미지급)
 }
 
 export interface DrawWinnerPayoutSummary {
   ranks: DrawWinnerRankPayout[]
-  totalPayout: number     // 실제 지급 예정액 총합 (승자 있는 등수의 풀 합)
+  totalPayout: number     // 실제 지급 예정액 총합 (Σ rankPayout)
 }
 
 // ─── 상수 ────────────────────────────────────────────────────────────────────
@@ -115,7 +116,8 @@ export async function getDrawExpectedValue(drawId: string): Promise<DrawExpected
 /**
  * 직전 회차 등수별 당첨자 수 + 실제 지급 예정액.
  * - 표시 인원수: source='auto' (수동 제외) count
- * - 1인당 지급액: draw_prizes.amount(총 상금 풀) ÷ 전체 당첨자 수(auto+manual)
+ * - 1인당 지급액: draw_prizes.amount(총 상금 풀) ÷ 전체 당첨자 수(auto+manual) — 수동 포함 희석
+ * - 실제 지급액: 1인당 × auto 수 (수동 당첨자는 미지급) → auto 0명이면 0원
  * - 상금 풀(amount)이 있는 현금 등수만 반환.
  * 행 데이터를 전송하지 않는 count-only(head) 쿼리로 응모자 많은 등수도 안전하게 집계.
  */
@@ -148,16 +150,18 @@ export async function getPreviousDrawWinnerPayout(drawId: string): Promise<DrawW
         const autoCount = countResults[i * 2].count ?? 0
         const totalCount = countResults[i * 2 + 1].count ?? 0
         const prizeAmount = prizeMap[rank]
+        const perWinnerPayout = totalCount > 0 ? Math.floor(prizeAmount / totalCount) : 0
         return {
           rank,
           autoCount,
           totalCount,
           prizeAmount,
-          perWinnerPayout: totalCount > 0 ? Math.floor(prizeAmount / totalCount) : 0,
+          perWinnerPayout,
+          rankPayout: perWinnerPayout * autoCount,
         }
       })
 
-    const totalPayout = payoutRanks.reduce((s, r) => s + (r.totalCount > 0 ? r.prizeAmount : 0), 0)
+    const totalPayout = payoutRanks.reduce((s, r) => s + r.rankPayout, 0)
     return { ranks: payoutRanks, totalPayout }
   } catch {
     return { ranks: [], totalPayout: 0 }
