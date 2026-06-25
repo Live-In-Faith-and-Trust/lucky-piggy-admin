@@ -21,13 +21,18 @@ export interface DrawExpectedValueData {
   enteredPerTicket: number    // 응모 기준 1장 기댓값
 }
 
-export interface DrawWinnerSummary {
-  id: string
-  prize_rank: number
-  real_name: string | null
-  payment_status: 'pending' | 'paid' | 'cancelled'
-  account_verified: boolean
-  prize_amount: number | null
+/** 직전 회차 등수별 당첨자/지급액 요약 */
+export interface DrawWinnerRankPayout {
+  rank: number
+  autoCount: number       // 실제(자동) 당첨자 수 — 표시용
+  totalCount: number      // auto+manual — 1/n 분모
+  prizeAmount: number     // 해당 등수 총 상금 풀
+  perWinnerPayout: number // amount ÷ totalCount (수동 포함 1/n)
+}
+
+export interface DrawWinnerPayoutSummary {
+  ranks: DrawWinnerRankPayout[]
+  totalPayout: number     // 실제 지급 예정액 총합 (승자 있는 등수의 풀 합)
 }
 
 // ─── 상수 ────────────────────────────────────────────────────────────────────
@@ -108,52 +113,53 @@ export async function getDrawExpectedValue(drawId: string): Promise<DrawExpected
 }
 
 /**
- * 직전 회차 1~3등 당첨자 조회
+ * 직전 회차 등수별 당첨자 수 + 실제 지급 예정액.
+ * - 표시 인원수: source='auto' (수동 제외) count
+ * - 1인당 지급액: draw_prizes.amount(총 상금 풀) ÷ 전체 당첨자 수(auto+manual)
+ * - 상금 풀(amount)이 있는 현금 등수만 반환.
+ * 행 데이터를 전송하지 않는 count-only(head) 쿼리로 응모자 많은 등수도 안전하게 집계.
  */
-export async function getPreviousDrawWinners(drawId: string): Promise<DrawWinnerSummary[]> {
+export async function getPreviousDrawWinnerPayout(drawId: string): Promise<DrawWinnerPayoutSummary> {
+  const ranks = [1, 2, 3, 4, 5]
   try {
     const supabase = await getSupabaseClient()
 
-    const [winnersResult, prizesResult] = await Promise.all([
-      supabase
-        .from('draw_winners')
-        .select('id, prize_rank, real_name, payment_status, account_verified')
-        .eq('draw_id', drawId)
-        .in('prize_rank', [1, 2, 3])
-        .order('prize_rank', { ascending: true }),
-      supabase
-        .from('draw_prizes')
-        .select('prize_rank, amount')
-        .eq('draw_id', drawId)
-        .in('prize_rank', [1, 2, 3]),
+    const [prizeResult, ...countResults] = await Promise.all([
+      supabase.from('draw_prizes').select('prize_rank, amount').eq('draw_id', drawId),
+      // 등수별 [auto count, total count] — 모두 head(count-only)
+      ...ranks.flatMap((rank) => [
+        supabase.from('draw_winners').select('*', { count: 'exact', head: true })
+          .eq('draw_id', drawId).eq('prize_rank', rank).eq('source', 'auto'),
+        supabase.from('draw_winners').select('*', { count: 'exact', head: true })
+          .eq('draw_id', drawId).eq('prize_rank', rank),
+      ]),
     ])
 
-    if (winnersResult.error) throw winnersResult.error
-    if (prizesResult.error) throw prizesResult.error
-
     const prizeMap: Record<number, number> = Object.fromEntries(
-      (prizesResult.data ?? []).map(
-        (r: { prize_rank: number; amount: number }) => [r.prize_rank, r.amount],
-      ),
+      (prizeResult.data ?? [])
+        .filter((r: { amount: number | null }) => r.amount != null)
+        .map((r: { prize_rank: number; amount: number }) => [r.prize_rank, r.amount]),
     )
 
-    return (winnersResult.data ?? []).map(
-      (w: {
-        id: string
-        prize_rank: number
-        real_name: string | null
-        payment_status: 'pending' | 'paid' | 'cancelled'
-        account_verified: boolean
-      }): DrawWinnerSummary => ({
-        id: w.id,
-        prize_rank: w.prize_rank,
-        real_name: w.real_name,
-        payment_status: w.payment_status,
-        account_verified: w.account_verified,
-        prize_amount: prizeMap[w.prize_rank] ?? null,
-      }),
-    )
+    const payoutRanks: DrawWinnerRankPayout[] = ranks
+      .filter((rank) => prizeMap[rank] != null)
+      .map((rank) => {
+        const i = ranks.indexOf(rank)
+        const autoCount = countResults[i * 2].count ?? 0
+        const totalCount = countResults[i * 2 + 1].count ?? 0
+        const prizeAmount = prizeMap[rank]
+        return {
+          rank,
+          autoCount,
+          totalCount,
+          prizeAmount,
+          perWinnerPayout: totalCount > 0 ? Math.floor(prizeAmount / totalCount) : 0,
+        }
+      })
+
+    const totalPayout = payoutRanks.reduce((s, r) => s + (r.totalCount > 0 ? r.prizeAmount : 0), 0)
+    return { ranks: payoutRanks, totalPayout }
   } catch {
-    return []
+    return { ranks: [], totalPayout: 0 }
   }
 }

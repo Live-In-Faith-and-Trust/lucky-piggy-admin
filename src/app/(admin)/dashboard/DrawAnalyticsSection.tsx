@@ -1,6 +1,6 @@
 import { getSupabaseClient } from '@/lib/supabase/server'
-import { getDrawExpectedValue, getPreviousDrawWinners } from '@/lib/supabase/analytics'
-import type { DrawExpectedValueData, DrawWinnerSummary } from '@/lib/supabase/analytics'
+import { getDrawExpectedValue, getPreviousDrawWinnerPayout } from '@/lib/supabase/analytics'
+import type { DrawExpectedValueData, DrawWinnerPayoutSummary } from '@/lib/supabase/analytics'
 import ExpectedValueCard from './ExpectedValueCard'
 import RecentWinnersCard from './RecentWinnersCard'
 
@@ -48,10 +48,10 @@ async function getAnalyticsDrawData(): Promise<{
 export default async function DrawAnalyticsSection() {
   const { current, previous } = await getAnalyticsDrawData()
 
-  const [expectedValueData, winners]: [DrawExpectedValueData | null, DrawWinnerSummary[]] =
+  const [expectedValueData, payout]: [DrawExpectedValueData | null, DrawWinnerPayoutSummary] =
     await Promise.all([
       current ? getDrawExpectedValue(current.id) : Promise.resolve(null),
-      previous ? getPreviousDrawWinners(previous.id) : Promise.resolve([]),
+      previous ? getPreviousDrawWinnerPayout(previous.id) : Promise.resolve({ ranks: [], totalPayout: 0 }),
     ])
 
   if (!current && !previous) return null
@@ -70,7 +70,7 @@ export default async function DrawAnalyticsSection() {
         {previous ? (
           <RecentWinnersCard
             roundNumber={previous.round_number}
-            winners={winners}
+            payout={payout}
             winningNumbers={previous.winning_numbers}
             bonusNumber={previous.bonus_number}
           />
