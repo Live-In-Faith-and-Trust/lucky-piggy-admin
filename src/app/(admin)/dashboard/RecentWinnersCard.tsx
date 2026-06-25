@@ -52,17 +52,19 @@ export default function RecentWinnersCard({ roundNumber, payout, winningNumbers,
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-foreground tracking-tight">{r.rank}등</span>
                 <span className="text-xs text-muted-foreground tracking-tight tabular-nums">
-                  {r.autoCount}명
+                  실제 {r.autoCount}명
+                  {r.autoCount > 0 && (
+                    <span className="ml-1">· 1인 {won(r.perWinnerPayout)}</span>
+                  )}
                 </span>
               </div>
               <span className="text-sm font-bold tabular-nums text-foreground">
-                {won(r.perWinnerPayout)}
-                <span className="text-[11px] font-normal text-muted-foreground ml-1">/ 1인</span>
+                {won(r.rankPayout)}
               </span>
             </div>
           ))}
 
-          {/* 지급액 총합 (수동 포함 1/n 실제 지급 예정액) */}
+          {/* 지급액 총합 — 실제(자동) 당첨자분만, 수동 미지급 */}
           <div className="flex items-center justify-between border-t border-border pt-2.5 mt-0.5">
             <span className="text-xs font-medium text-muted-foreground tracking-tight">
               지급액 총합
