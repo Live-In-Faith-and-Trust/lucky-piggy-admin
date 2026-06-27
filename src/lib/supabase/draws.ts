@@ -185,10 +185,13 @@ export async function getWinners1to3(env: AdminEnv, drawId: string): Promise<Dra
 
 // ── Write functions (no cache — called from Server Actions) ─────────────────
 
+const REFERRAL_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+const genReferralCode = () =>
+  Array.from({ length: 6 }, () => REFERRAL_CHARS[Math.floor(Math.random() * 36)]).join('')
+
 async function generateUniqueReferralCode(supabase: ReturnType<typeof createServerClient>): Promise<string> {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   for (let attempt = 0; attempt < 10; attempt++) {
-    const code = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * 36)]).join('')
+    const code = genReferralCode()
     const { count: profileCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('referral_code', code)
     if (profileCount && profileCount > 0) continue
     const { count: winnerCount } = await supabase.from('draw_winners').select('*', { count: 'exact', head: true }).eq('manual_referral_code', code)
@@ -196,6 +199,34 @@ async function generateUniqueReferralCode(supabase: ReturnType<typeof createServ
     return code
   }
   throw new Error('초대코드 생성에 실패했습니다')
+}
+
+/** N개의 고유 manual_referral_code 후보를 생성한다 (메모리 생성 + 단일 벌크 존재 체크). */
+async function generateManualReferralCodes(
+  supabase: ReturnType<typeof createServerClient>,
+  n: number,
+): Promise<string[]> {
+  const codes = new Set<string>()
+  while (codes.size < n) codes.add(genReferralCode())
+
+  // 후보 전체가 profiles.referral_code / draw_winners.manual_referral_code 양쪽에 대해
+  // 깨끗해질 때까지 재조회한다 — 리필된 코드도 반드시 DB 검증을 거친다.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidates = Array.from(codes)
+    const [{ data: profileHits }, { data: winnerHits }] = await Promise.all([
+      supabase.from('profiles').select('referral_code').in('referral_code', candidates),
+      supabase.from('draw_winners').select('manual_referral_code').in('manual_referral_code', candidates),
+    ])
+    const taken = new Set<string>([
+      ...(profileHits ?? []).map((r) => r.referral_code as string),
+      ...(winnerHits ?? []).map((r) => r.manual_referral_code as string),
+    ])
+    if (taken.size === 0) return Array.from(codes)
+    for (const bad of taken) codes.delete(bad)
+    while (codes.size < n) codes.add(genReferralCode())
+  }
+  // 5회 내 미해소(사실상 불가) — 잔여 동시성 충돌은 호출부 insert 재시도(23505)가 처리한다.
+  return Array.from(codes)
 }
 
 const DEFAULT_PRIZE_AMOUNTS: Record<number, number> = {
@@ -248,6 +279,60 @@ export async function addManualWinner(
     manual_referral_code,
   })
   if (error) throw error
+}
+
+/**
+ * 수동 당첨자 N명을 단일 배치로 추가한다 (타임아웃 방지).
+ * - draw_prizes upsert (ensurePrizes=true인 첫 청크에서만)
+ * - manual_referral_code N개를 메모리 생성 + 단일 벌크 존재 체크
+ * - draw_winners에 N행 단일 insert. 청크 단위로 원자적이다(ponytail: 행별 부분성공보다
+ *   전체 성공/실패가 명확 — 코드 충돌은 아래 재시도로 자가치유, 그 외 오류는 시끄럽게 실패).
+ * entryCounts[i] = i번째 당첨자의 manual_entry_count
+ * 반환: 삽입된 행 수
+ */
+export async function addManualWinnersBatch(
+  env: AdminEnv,
+  payload: { draw_id: string; prize_rank: number; entryCounts: number[]; ensurePrizes?: boolean }
+): Promise<number> {
+  const { draw_id, prize_rank, entryCounts, ensurePrizes = true } = payload
+  const n = entryCounts.length
+  if (n === 0) return 0
+
+  const supabase = createServerClient(env)
+
+  // draw_prizes upsert — 일괄작업당 1회면 충분하므로 첫 청크에서만
+  if (ensurePrizes) {
+    const prizesToUpsert = [1, 2, 3].map((rank) => ({
+      draw_id,
+      prize_rank: rank,
+      name: `${rank}등`,
+      description: `${rank}등 상금`,
+      type: 'cash',
+      amount: DEFAULT_PRIZE_AMOUNTS[rank],
+    }))
+    const { error: prizeError } = await supabase
+      .from('draw_prizes')
+      .upsert(prizesToUpsert, { onConflict: 'draw_id,prize_rank', ignoreDuplicates: true })
+    if (prizeError) throw prizeError
+  }
+
+  // manual_referral_code는 unique 제약이 있다. 사전 벌크체크 후에도 동시성으로 충돌할 수 있어
+  // unique_violation(23505) 시 새 코드로 최대 3회 재시도한다.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const codes = await generateManualReferralCodes(supabase, n)
+    const rows = entryCounts.map((count, i) => ({
+      draw_id,
+      prize_rank,
+      manual_entry_count: count,
+      source: 'manual' as WinnerSource,
+      payment_status: 'pending' as PaymentStatus,
+      manual_referral_code: codes[i],
+    }))
+    const { error } = await supabase.from('draw_winners').insert(rows)
+    if (!error) return n
+    if (error.code !== '23505') throw error
+  }
+  throw new Error('초대코드 충돌로 일괄 추가에 실패했습니다')
 }
 
 export async function toggleAccountVerified(
