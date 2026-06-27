@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { bulkAddManualWinnersAction } from '@/app/(admin)/draws/actions'
+import { bulkAddManualWinnersAction, revalidateDrawWinnersAction } from '@/app/(admin)/draws/actions'
+
+const CHUNK_SIZE = 25
+const MAX_BULK = 2000
 
 interface Props {
   drawId: string
@@ -9,7 +12,10 @@ interface Props {
 
 export default function BulkAddWinnerDialog({ drawId }: Props) {
   const [open, setOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
+  const [running, setRunning] = useState(false)
+  const [done, setDone] = useState(0)
+  const [total, setTotal] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -19,10 +25,12 @@ export default function BulkAddWinnerDialog({ drawId }: Props) {
   const [maxEntryCount, setMaxEntryCount] = useState('')
 
   const handleClose = () => {
-    if (isPending) return
+    if (running) return
     setOpen(false)
     setError(null)
     setSuccessMessage(null)
+    setDone(0)
+    setTotal(0)
     setPrizeRank('1')
     setCount('')
     setMinEntryCount('')
@@ -34,7 +42,7 @@ export default function BulkAddWinnerDialog({ drawId }: Props) {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, isPending])
+  }, [open, running])
 
   const countNum = parseInt(count, 10)
   const minNum = parseInt(minEntryCount, 10)
@@ -46,12 +54,17 @@ export default function BulkAddWinnerDialog({ drawId }: Props) {
       ? `${prizeRank}등 ${countNum}명 · 응모권 ${minNum}~${maxNum}장 랜덤`
       : null
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setSuccessMessage(null)
 
     if (!count || isNaN(countNum) || countNum < 1) {
       setError('추가 인원을 1 이상 입력하세요.')
+      return
+    }
+    if (countNum > MAX_BULK) {
+      setError(`한 번에 최대 ${MAX_BULK}명까지 추가할 수 있습니다.`)
       return
     }
     if (!minEntryCount || isNaN(minNum) || minNum < 1) {
@@ -67,28 +80,66 @@ export default function BulkAddWinnerDialog({ drawId }: Props) {
       return
     }
 
-    startTransition(async () => {
-      const result = await bulkAddManualWinnersAction({
-        draw_id: drawId,
-        prize_rank: Number(prizeRank),
-        count: countNum,
-        min_entry_count: minNum,
-        max_entry_count: maxNum,
-      })
+    setRunning(true)
+    setDone(0)
+    setTotal(countNum)
 
-      if (result.error) {
-        setError(result.error)
-      } else {
-        setSuccessMessage(`${result.added}명 추가 완료!`)
-        setTimeout(() => {
-          handleClose()
-        }, 1500)
+    let added = 0
+    let remaining = countNum
+    let first = true
+    let failed = false
+    let threw = false
+
+    try {
+      while (remaining > 0) {
+        const chunkCount = Math.min(CHUNK_SIZE, remaining)
+
+        const result = await bulkAddManualWinnersAction({
+          draw_id: drawId,
+          prize_rank: Number(prizeRank),
+          count: chunkCount,
+          min_entry_count: minNum,
+          max_entry_count: maxNum,
+          ensurePrizes: first,
+        })
+
+        added += result.added
+        setDone(added)
+
+        if (result.error) {
+          setError(`${added}명까지 추가됨 · 오류: ${result.error}`)
+          failed = true
+          break
+        }
+
+        remaining -= chunkCount
+        first = false
       }
-    })
+    } catch {
+      // 전송 자체가 실패(네트워크/서버 throw) — 서버 커밋 여부가 응답 유실로 불확실하다.
+      // running 영구 고착만 막고, 남은 인원을 자동으로 줄이지 않는다(중복 추가 위험).
+      setError(`네트워크 오류로 중단됐습니다(약 ${added}명까지 추가). 당첨자 목록을 확인한 뒤 남은 인원을 직접 입력해 다시 추가하세요.`)
+      failed = true
+      threw = true
+    } finally {
+      // 첫 청크 실패 시에도 draw_prizes가 upsert됐을 수 있으므로 항상 목록 갱신 — transition으로 RSC 리렌더
+      startTransition(async () => { await revalidateDrawWinnersAction() })
+      setRunning(false)
+      // 결정적 실패(서버가 error를 반환 = insert 미커밋)만 남은 인원 자동 반영.
+      // 전송 throw는 커밋 불확실하므로 입력값을 건드리지 않는다.
+      if (failed && !threw) setCount(String(countNum - added))
+    }
+
+    if (!failed) {
+      setSuccessMessage(`${added}명 추가 완료!`)
+      setTimeout(() => { handleClose() }, 1500)
+    }
   }
 
   const inputClass = "w-full bg-muted border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
   const labelClass = "text-xs font-medium text-muted-foreground tracking-tight"
+
+  const progressPct = total > 0 ? Math.round((done / total) * 100) : 0
 
   return (
     <>
@@ -172,9 +223,30 @@ export default function BulkAddWinnerDialog({ drawId }: Props) {
               </div>
 
               {/* 미리보기 */}
-              {previewText && (
+              {previewText && !running && (
                 <div className="rounded-lg bg-muted border border-border px-3 py-2.5">
                   <p className="text-xs font-medium text-foreground tracking-tight">{previewText}</p>
+                </div>
+              )}
+
+              {/* 진행률 (작업 중) */}
+              {running && (
+                <div className="space-y-2">
+                  <div
+                    className="w-full bg-muted rounded h-2 overflow-hidden"
+                    role="progressbar"
+                    aria-valuenow={done}
+                    aria-valuemin={0}
+                    aria-valuemax={total}
+                  >
+                    <div
+                      className="bg-primary h-2 rounded transition-all"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground tracking-tight">
+                    총 {total}명 중 {done}명 추가 완료 ({progressPct}%)
+                  </p>
                 </div>
               )}
 
@@ -185,17 +257,20 @@ export default function BulkAddWinnerDialog({ drawId }: Props) {
                 <button
                   type="button"
                   onClick={handleClose}
-                  disabled={isPending}
-                  className="text-sm px-4 py-2 rounded-md border border-border text-muted-foreground hover:bg-muted disabled:opacity-50 tracking-tight"
+                  disabled={running}
+                  className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-md border border-border text-muted-foreground hover:bg-muted disabled:opacity-50 tracking-tight"
                 >
+                  {running && (
+                    <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  )}
                   취소
                 </button>
                 <button
                   type="submit"
-                  disabled={isPending || !!successMessage}
+                  disabled={running || !!successMessage}
                   className="text-sm px-4 py-2 rounded-md bg-primary text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-50 tracking-tight"
                 >
-                  {isPending ? '추가 중...' : '추가하기'}
+                  {running ? '추가 중...' : '추가하기'}
                 </button>
               </div>
             </form>
