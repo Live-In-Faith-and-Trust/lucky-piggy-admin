@@ -198,7 +198,7 @@ export default function WinnerList({ winners, drawId, rankAmounts, roundNumber }
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2.5 text-xs text-muted-foreground max-w-[160px] truncate" title={winner.winner_comment ?? undefined}>
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground max-w-[160px] whitespace-pre-wrap break-words align-top">
                       {winner.winner_comment ?? '—'}
                     </td>
                     <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground tracking-tight">
