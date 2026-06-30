@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { getSupabaseClient } from '@/lib/supabase/server'
-import SignupChart, { type DayData } from './SignupChart'
+import TrendChart, { type DayData } from './TrendChart'
 import DrawSection from './DrawSection'
 import DrawAnalyticsSection from './DrawAnalyticsSection'
 import AutoRefresh from './AutoRefresh'
@@ -44,18 +44,28 @@ async function getDailySignupCounts(
   }))
 }
 
+async function getDailyActiveUsers(
+  supabase: Awaited<ReturnType<typeof getSupabaseClient>>,
+  days: number,
+): Promise<DayData[]> {
+  const { data, error } = await supabase.rpc('get_daily_active_users', { p_days: days })
+  if (error || !data) return []
+  return data as DayData[]
+}
+
 async function getDashboardData() {
   try {
     const supabase = await getSupabaseClient()
     const todayStart = getTodayUTCMidnight().toISOString()
 
-    const [totalResult, todayResult, monthlyData] = await Promise.all([
+    const [totalResult, todayResult, monthlyData, dauMonthly] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', todayStart),
       getDailySignupCounts(supabase, 30),
+      getDailyActiveUsers(supabase, 30),
     ])
 
     return {
@@ -63,14 +73,16 @@ async function getDashboardData() {
       todaySignups: todayResult.count ?? null,
       weeklyData: monthlyData.slice(-7),
       monthlyData,
+      dauWeekly: dauMonthly.slice(-7),
+      dauMonthly,
     }
   } catch {
-    return { totalUsers: null, todaySignups: null, weeklyData: [], monthlyData: [] }
+    return { totalUsers: null, todaySignups: null, weeklyData: [], monthlyData: [], dauWeekly: [], dauMonthly: [] }
   }
 }
 
 export default async function DashboardPage() {
-  const { totalUsers, todaySignups, weeklyData, monthlyData } = await getDashboardData()
+  const { totalUsers, todaySignups, weeklyData, monthlyData, dauWeekly, dauMonthly } = await getDashboardData()
 
   return (
     <div className="space-y-6">
@@ -103,7 +115,10 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <SignupChart weeklyData={weeklyData} monthlyData={monthlyData} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TrendChart title="가입자 추이" weeklyData={weeklyData} monthlyData={monthlyData} color="#1A4FD8" tooltipLabel="신규 가입" summaryMode="sum" gradientId="signupFill" />
+        <TrendChart title="DAU (활성 사용자)" weeklyData={dauWeekly} monthlyData={dauMonthly} color="#16A34A" tooltipLabel="활성 사용자" summaryMode="avg" gradientId="dauFill" />
+      </div>
 
       <DrawSection />
       <DrawAnalyticsSection />
