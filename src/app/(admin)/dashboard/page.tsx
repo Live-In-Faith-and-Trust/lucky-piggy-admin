@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { getSupabaseClient } from '@/lib/supabase/server'
 import TrendChart, { type DayData } from './TrendChart'
+import DauSection from './DauSection'
 import DrawSection from './DrawSection'
 import DrawAnalyticsSection from './DrawAnalyticsSection'
 import AutoRefresh from './AutoRefresh'
@@ -21,7 +22,7 @@ async function getDailySignupCounts(
 
   const dayStarts = Array.from({ length: days }, (_, i) => {
     const d = new Date(todayUTC)
-    d.setUTCDate(todayUTC.getUTCDate() - (days - 1 - i))
+    d.setUTCDate(todayUTC.getUTCDate() - (days - i))  // ponytail: offset by 1 so last element = yesterday
     return d
   })
 
@@ -48,9 +49,9 @@ async function getDailyActiveUsers(
   supabase: Awaited<ReturnType<typeof getSupabaseClient>>,
   days: number,
 ): Promise<DayData[]> {
-  const { data, error } = await supabase.rpc('get_daily_active_users', { p_days: days })
+  const { data, error } = await supabase.rpc('get_daily_active_users', { p_days: days + 1 })
   if (error || !data) return []
-  return data as DayData[]
+  return (data as DayData[]).slice(0, -1)  // ponytail: drop today (last element), keep days rows up to yesterday
 }
 
 async function getDashboardData() {
@@ -117,7 +118,7 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <TrendChart title="가입자 추이" weeklyData={weeklyData} monthlyData={monthlyData} color="#1A4FD8" tooltipLabel="신규 가입" summaryMode="sum" gradientId="signupFill" />
-        <TrendChart title="DAU (활성 사용자)" weeklyData={dauWeekly} monthlyData={dauMonthly} color="#16A34A" tooltipLabel="활성 사용자" summaryMode="avg" gradientId="dauFill" />
+        <DauSection weeklyData={dauWeekly} monthlyData={dauMonthly} />
       </div>
 
       <DrawSection />

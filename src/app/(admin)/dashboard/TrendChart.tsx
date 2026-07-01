@@ -5,6 +5,9 @@ import { cn } from '@/lib/utils'
 
 export type DayData = { date: string; count: number }
 
+const TABS = [{ key: 'week', label: '일주일' }, { key: 'month', label: '한달' }] as const
+export type Tab = (typeof TABS)[number]['key']
+
 type Props = {
   title: string
   weeklyData: DayData[]
@@ -13,14 +16,18 @@ type Props = {
   tooltipLabel: string
   summaryMode: 'sum' | 'avg'
   gradientId: string
+  defaultTab?: Tab
+  // controlled mode
+  tab?: Tab
+  onTabChange?: (t: Tab) => void
 }
 
-const TABS = [{ key: 'week', label: '일주일' }, { key: 'month', label: '한달' }] as const
-type Tab = (typeof TABS)[number]['key']
+export default function TrendChart({ title, weeklyData, monthlyData, color, tooltipLabel, summaryMode, gradientId, defaultTab, tab: controlledTab, onTabChange }: Props) {
+  const [internalTab, setInternalTab] = useState<Tab>(defaultTab ?? 'month')
+  const activeTab = controlledTab ?? internalTab
+  const setTab = (t: Tab) => { onTabChange ? onTabChange(t) : setInternalTab(t) }
 
-export default function TrendChart({ title, weeklyData, monthlyData, color, tooltipLabel, summaryMode, gradientId }: Props) {
-  const [tab, setTab] = useState<Tab>('week')
-  const data = tab === 'week' ? weeklyData : monthlyData
+  const data = activeTab === 'week' ? weeklyData : monthlyData
   const sum = data.reduce((s, d) => s + d.count, 0)
   const summary = summaryMode === 'avg' ? Math.round(sum / (data.length || 1)) : sum
   const summaryLabel = summaryMode === 'avg' ? '일평균' : '합계'
@@ -32,13 +39,13 @@ export default function TrendChart({ title, weeklyData, monthlyData, color, tool
         <div>
           <p className="text-sm font-semibold tracking-tight text-foreground">{title}</p>
           <p className="text-xs text-muted-foreground tracking-tight mt-0.5">
-            {tab === 'week' ? '최근 7일' : '최근 30일'} {summaryLabel}{' '}
+            {activeTab === 'week' ? '최근 7일' : '최근 30일'} {summaryLabel}{' '}
             <span className="font-semibold text-foreground">{summary.toLocaleString('ko-KR')}명</span>
           </p>
         </div>
         <div className="flex gap-1 rounded-lg bg-muted p-1">
           {TABS.map(({ key, label }) => (
-            <button key={key} onClick={() => setTab(key)} className={cn('px-3 py-1 text-xs font-medium rounded-md transition-all', tab === key ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>{label}</button>
+            <button key={key} onClick={() => setTab(key)} className={cn('px-3 py-1 text-xs font-medium rounded-md transition-all', activeTab === key ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>{label}</button>
           ))}
         </div>
       </div>
@@ -51,7 +58,7 @@ export default function TrendChart({ title, weeklyData, monthlyData, color, tool
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
-          <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} interval={tab === 'month' ? 4 : 0} />
+          <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} interval={activeTab === 'month' ? 4 : 0} />
           <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, Math.ceil(max * 1.2) || 1]} />
           <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid #E0E0E0', borderRadius: '8px', fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} labelStyle={{ color: 'var(--muted-foreground)', marginBottom: 2 }} formatter={(value) => [`${Number(value).toLocaleString('ko-KR')}명`, tooltipLabel]} cursor={{ stroke: '#E0E0E0', strokeWidth: 1 }} />
           <Area type="monotone" dataKey="count" stroke={color} strokeWidth={2} fill={`url(#${gradientId})`} dot={false} activeDot={{ r: 4, fill: color, strokeWidth: 0 }} />
